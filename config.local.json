@@ -1,0 +1,8 @@
+{
+    "database": {
+       "user": "root",
+       "password": "123",
+       "database": "bidding_project",
+       "address": "localhost:8090"
+    }    
+}
