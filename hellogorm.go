@@ -4,17 +4,25 @@ import (
 	model "hellogorm/model"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
 	//"time"
 	//_ "github.com/jinzhu/gorm/dialects/sqlite"
 
+	jwt_lib "github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/contrib/jwt"
 	"github.com/gin-gonic/gin"
 )
 
 /******SINGLETON Database Connection******/
 var once sync.Once
+
+//PASSWORD for JWT learning
+var (
+	password = "thonking"
+)
 
 //DatabaseB ...It hold the pointer to database.
 type DatabaseB struct {
@@ -66,15 +74,26 @@ func main() {
 	//router.Use(gin.LoggerWithFormatter(loggerformat))
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
+	router.GET("/", func(c *gin.Context) {
+		c.String(200, "Welcome to hellogorm.go")
+	})
 
 	v1 := router.Group("show")
-	{
-		v1.GET("/:categories", showitems)
-	}
+	v1.GET("/:categories", showitems)
+
+	v2 := router.Group("api")
+	v2.GET("/", generateJwtToken)
+
+	v3 := router.Group("api/private")
+	v3.Use(jwt.Auth(password))
+	v3.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "Login success, welcome to private"})
+	})
 
 	router.Run(":8080")
 }
 
+//Show items from items tables
 func showitems(c *gin.Context) {
 	db := GetDBInstance().Db
 	categoriesName := c.Param("categories")
@@ -92,4 +111,20 @@ func showitems(c *gin.Context) {
 		}
 		c.JSON(200, itemsList)
 	}
+}
+
+//Generate JWT Token
+func generateJwtToken(c *gin.Context) {
+	token := jwt_lib.New(jwt_lib.GetSigningMethod("HS256"))
+
+	token.Claims = jwt_lib.MapClaims{
+		"ID":  "Golang",
+		"exp": time.Now().Add(time.Hour * 1).Unix(),
+	}
+
+	tokenString, err := token.SignedString([]byte(password))
+	if err != nil {
+		c.JSON(500, gin.H{"message": "Could not generate Token"})
+	}
+	c.JSON(200, gin.H{"token": tokenString})
 }
