@@ -5,11 +5,14 @@ import (
 	"log"
 	"os"
 
+	//"time"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	jsoniter "github.com/json-iterator/go"
 )
 
+//Config ...Database login info
 type Config struct {
 	Database struct {
 		User     string `json:"user"`
@@ -18,6 +21,42 @@ type Config struct {
 		Address  string `json:"address"`
 	} `json:"database"`
 }
+
+//Items ...Used by gorm
+type Items struct {
+	ItemID            int
+	ItemName          string `gorm:"type:varchar(255)"`
+	ItemBiddingstatus string `gorm:"type:varchar(20)"`
+	ItemCondition     string `gorm:"type:varchar(10)"`
+	CategoriesID      int
+	ItemDescription   string `gorm:"type:varchar(255)"`
+}
+
+//User ...Used by gorm and json
+type User struct {
+	UserID    int
+	UserName  string `gorm:"type:varchar(100)" json:"name"`
+	UserPhone string `gorm:"type:varchar(15)" json:"phone"`
+	//UserBirth 			time.Time `gorm:"type:date" json:"birthdate"`
+	UserGender       byte   `gorm:"type:char(1)" json:"gender"`
+	UserAddress      string `gorm:"type:varchar(255)" json:"address"`
+	UserLoginID      string `gorm:"type:varchar(255)" json:"userid"`
+	UserPassword     string `gorm:"type:varchar(255)" json:"password"`
+	UserAccessLevel  int    `gorm:"type:int" json:"accesslevel"`
+	UserSessionToken string `gorm:"type:TEXT" json:"token"`
+}
+
+//SignupLoginResponse ...Respond form
+type SignupLoginResponse struct {
+	ResponseTime string `json:"responseTime"`
+	Code         int    `json:"code"`
+	Message      string `json:"message"`
+	Data         User   `json:"data"`
+}
+
+var (
+	SecretKey = "thonking"
+)
 
 func DecodeDataFromJsonFile(f *os.File, data interface{}) error {
 	jsonParser := jsoniter.NewDecoder(f)
@@ -54,7 +93,7 @@ func SetupConfig() Config {
 	return conf
 }
 
-func ConnectDb(user string, password string, database string, address string) (*gorm.DB) {
+func ConnectDb(user string, password string, database string, address string) *gorm.DB {
 	connectionInfo := fmt.Sprintf(`%s:%s@(%s)/%s?charset=utf8&parseTime=True&loc=Local`, user, password, address, database)
 
 	db, err := gorm.Open("mysql", connectionInfo)
