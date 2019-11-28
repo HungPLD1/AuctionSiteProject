@@ -34,13 +34,12 @@ type Items struct {
 
 //User ...Used by gorm and json
 type User struct {
-	UserID    int
+	UserID    string `gorm:"type:varchar(255)" json:"userid"`
 	UserName  string `gorm:"type:varchar(100)" json:"name"`
 	UserPhone string `gorm:"type:varchar(15)" json:"phone"`
 	//UserBirth 			time.Time `gorm:"type:date" json:"birthdate"`
 	UserGender       byte   `gorm:"type:char(1)" json:"gender"`
 	UserAddress      string `gorm:"type:varchar(255)" json:"address"`
-	UserLoginID      string `gorm:"type:varchar(255)" json:"userid"`
 	UserPassword     string `gorm:"type:varchar(255)" json:"password"`
 	UserAccessLevel  int    `gorm:"type:int" json:"accesslevel"`
 	UserSessionToken string `gorm:"type:TEXT" json:"token"`
@@ -52,6 +51,11 @@ type SignupLoginResponse struct {
 	Code         int    `json:"code"`
 	Message      string `json:"message"`
 	Data         User   `json:"data"`
+}
+
+//AuthorizationHeader ...Used to get session token in header
+type AuthorizationHeader struct {
+	Token string `header:"Authorization"`
 }
 
 var (

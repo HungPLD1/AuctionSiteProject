@@ -4,6 +4,7 @@ import (
 	"hellogorm/model"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	"github.com/rs/xid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -115,7 +115,7 @@ func RegisterJSON(c *gin.Context) {
 	}
 
 	//Check for empty field and password length
-	if newUser.UserLoginID == "" {
+	if newUser.UserID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Vui lòng nhập tên",
 		})
@@ -129,24 +129,17 @@ func RegisterJSON(c *gin.Context) {
 	}
 
 	//Fetch userdata from database to check for existing username
-	var usersList []model.User
-	errGetUsers := db.Table("user_common").
-		Select("user_phone, user_login_id").
-		Scan(&usersList).Error
-	if errGetUsers != nil {
-		log.Println(errGetUsers)
+	if exist, err := checkUserByID(newUser.UserID); err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Cannot connect to user database!",
+			"message": "Error while fetching user data",
 		})
 		return
-	}
-	for _, user := range usersList {
-		if newUser.UserLoginID == user.UserLoginID {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Tên truy cập đã có người sử dụng!",
-			})
-			return
-		}
+	} else if exist == true {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Tên truy cập đã có người sử dụng!",
+		})
+		return
 	}
 
 	//Encrypt the password
@@ -159,48 +152,19 @@ func RegisterJSON(c *gin.Context) {
 	}
 	passwordHash := string(hash)
 
-	//Generate new userID
-	userID := xid.New().String()
-
 	//Filling information in struct
 	newUser = model.User{
-		UserID:    10,
+		UserID:    newUser.UserID,
 		UserName:  "",
 		UserPhone: "",
 		//UserBirth:    	  time.Time{},
 		UserGender:       0,
 		UserAddress:      "",
-		UserLoginID:      newUser.UserLoginID,
 		UserPassword:     passwordHash,
 		UserAccessLevel:  1,
 		UserSessionToken: "",
 	}
-
-	// Tạo token với Header lưu thông tin chung:
-	// Loại token: JWT
-	// Thuật toán mã hoá: HS256
-	token := jwt_lib.New(jwt_lib.GetSigningMethod("HS256"))
-
-	// Truyền dữ liệu vào phần Claim của token
-	// Dữ liệu có kiểu map[string]interface{} mô phỏng một cấu trúc dạng JSON
-	token.Claims = jwt_lib.MapClaims{
-		"userId": userID,
-		"Role":   newUser.UserAccessLevel,
-		"exp":    time.Now().Add(time.Hour * 1).Unix(),
-	}
-
-	// Tạo Signature cho token
-	// Signature = HS256(Header, Claim, mysupersecretpassword)
-	// Sử dụng secretkey như một input đầu vào
-	// để thuật toán HS256 tạo ra chuỗi signature
-	tokenString, err := token.SignedString([]byte(model.SecretKey))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error while generating token!",
-		})
-		return
-	}
-	newUser.UserSessionToken = tokenString
+	newUser.UserSessionToken, _ = tokenGenerate(newUser)
 
 	//Save account info to database
 	errInsertDb := db.Table("user_common").Create(newUser).Error
@@ -223,10 +187,201 @@ func RegisterJSON(c *gin.Context) {
 	return
 }
 
-//ShowWishList ...Show user WishList, result are JSON form
+//LoginJSON ...API: Login by JSON
+func LoginJSON(c *gin.Context) {
+	db := GetDBInstance().Db
+	var userLogin model.User
+
+	err := c.BindJSON(&userLogin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+	//Validing Login Info
+	if exist, err := validLoginInfo(userLogin); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching user data",
+		})
+		return
+	} else if exist == false {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Tên truy cập hoặc mật khẩu không đúng!",
+		})
+		return
+	}
+	//Generate token
+	if userLogin.UserSessionToken, err = tokenGenerate(userLogin); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error,cannot create login session!",
+		})
+		return
+	}
+	//db.Save(&userLogin)
+	db.Table("user_common").Where("user_id = ?", userLogin.UserID).Update("user_session_token", userLogin.UserSessionToken)
+	return
+}
+
+//UserProfile ...API: Show user profile stored in jwt session token
+func UserProfile(c *gin.Context) {
+	//Get the auth key in header
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	//Get and return user profile
+	db := GetDBInstance().Db
+	var userprofile model.User
+	errprofile := db.Table("user_common").
+		Select("user_name, user_phone,user_birth,user_gender,user_address").
+		Where("user_id = ?", userID).
+		Scan(&userprofile).Error
+	if errprofile != nil {
+		log.Println(errprofile)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching user data",
+		})
+		return
+	}
+	c.JSON(200, userprofile)
+	return
+}
+
+/**********************************************************************/
+/**************************INTERNAL FUNCTIONS**************************/
+//check if the username exist in database or not
+func checkUserByID(UserID string) (bool, error) {
+	db := GetDBInstance().Db
+	var usersList []model.User
+	err := db.Table("user_common").Select("user_id").Scan(&usersList).Error
+	if err != nil {
+		return false, err
+	}
+	for _, usertmp := range usersList {
+		if UserID == usertmp.UserID {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+//check if the password is correct or not
+func checkUserPassword(userName string, userPassword string) (bool, error) {
+	db := GetDBInstance().Db
+	var user model.User
+	err := db.Table("user_common").
+		Select("user_password").
+		Where("user_id = ?", userName).
+		Scan(&user).Error
+	if err != nil {
+		return false, err
+	}
+	byteHash := []byte(user.UserPassword)
+	check := bcrypt.CompareHashAndPassword(byteHash, []byte(userPassword))
+	if check != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+/**	Function used by following API: /login
+*	Check the user info with those in database.
+*	First check if the username exist, then compare the password.
+*	Return true if data are matched, false otherwise.
+**/
+func validLoginInfo(userLogin model.User) (bool, error) {
+	//Check username
+	var userCheck, passCheck bool
+	var err error
+	if userCheck, err = checkUserByID(userLogin.UserID); err != nil {
+		return userCheck, err
+	}
+	//Check password
+	if passCheck, err = checkUserPassword(userLogin.UserID, userLogin.UserPassword); err != nil {
+		return passCheck, err
+	}
+	return (userCheck && passCheck), nil
+}
+
+/**	Function used by following API: /login , /register
+*	Generate a jwt token string to save the login session.
+*	Return string: the jwt token, error: Error when generating the token.
+**/
+func tokenGenerate(user model.User) (string, error) {
+	token := jwt_lib.New(jwt_lib.GetSigningMethod("HS256"))
+
+	token.Claims = jwt_lib.MapClaims{
+		"userId": user.UserID,
+		"Role":   user.UserAccessLevel,
+		"exp":    time.Now().Add(time.Hour * 1).Unix(),
+	}
+	return token.SignedString([]byte(model.SecretKey))
+}
+
+/**	Function used by following API: /profile
+*	Check the validation of jwt token session
+*	Return userID if token are valid, a empty string otherwise
+**/
+func checkSessionToken(token string) (string, error) {
+	tokenFromHeader := strings.Replace(token, "Bearer ", "", -1)
+	claims := jwt_lib.MapClaims{}
+	tkn, err := jwt_lib.ParseWithClaims(tokenFromHeader, claims, func(token *jwt_lib.Token) (interface{}, error) {
+		return []byte(model.SecretKey), nil
+	})
+	//In case of error, check for it
+	if err != nil {
+		if err == jwt_lib.ErrSignatureInvalid {
+			log.Println("error 1: Invalid Token")
+			return "", nil
+		}
+		log.Println("error 2: Bad Request", err)
+		return "", err
+	}
+	//Check for token expiration date
+	if !tkn.Valid {
+		log.Println("error 3: Invalid Token")
+		return "", nil
+	}
+	//Get and userID from the token
+	var userID string
+	//var roleFromToken int
+	for k, v := range claims {
+		if k == "userId" {
+			userID = v.(string)
+		}
+		/*if k == "Role" {
+			roleFromToken = int(v.(float64))
+		}*/
+	}
+	if chk, _ := checkUserByID(userID); chk == false {
+		log.Println("error 1: Invalid Token")
+		return "", nil
+	}
+
+	log.Println("Success: Token are valid")
+	return userID, nil
+}
+
+/****************************NOT YET INCLUDED*************************/
+
+//ShowWishList ...API: Show user WishList, result are JSON form
 func ShowWishList(c *gin.Context) {
 	//db := GetDBInstance().Db
 	//var itemsList []model.Items
 }
-
-/******INTERNAL FUNCTIONS******/

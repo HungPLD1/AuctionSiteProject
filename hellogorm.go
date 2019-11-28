@@ -10,7 +10,7 @@ import (
 	//_ "github.com/jinzhu/gorm/dialects/sqlite"
 
 	//jwt_lib "github.com/dgrijalva/jwt-go"
-	//"github.com/gin-gonic/contrib/jwt"
+	"github.com/gin-gonic/contrib/jwt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,8 +52,12 @@ func main() {
 	//API: Register new Account by JSON
 	router.POST("/register", controller.RegisterJSON)
 
+	//API: Login by JSON
+	router.POST("/login", controller.LoginJSON)
+	//API: Show user profile
+	router.GET("/profile",jwt.Auth(model.SecretKey), controller.UserProfile)
 	//API: Show user wishlish
-	router.GET("wishlist/", controller.ShowWishList)
+	router.GET("/wishlist", controller.ShowWishList)
 
 	router.Run(":8080")
 }

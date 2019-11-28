@@ -8,16 +8,15 @@ DROP TABLE IF EXISTS item;
 DROP TABLE IF EXISTS categories;
 
 CREATE TABLE user_common (
-    user_id             int PRIMARY KEY AUTO_INCREMENT,
+    user_id             VARCHAR(255) NOT NULL PRIMARY KEY,
     user_name           VARCHAR(100),
     user_phone          VARCHAR(15),
     user_birth          DATE,
     user_gender         CHAR,
-    user_adress         VARCHAR(255),
-    user_loginID        VARCHAR(32) NOT NULL,
+    user_address         VARCHAR(255),
     user_password       VARCHAR(255) NOT NULL,
     user_access_level   int NOT NULL,
-    user_login_token    TEXT
+    user_session_token    TEXT
 );
 
 CREATE TABLE categories (
@@ -45,14 +44,14 @@ CREATE TABLE item_image (
 );
 
 CREATE TABLE user_payment_info (
-    user_id           int,
+    user_id           VARCHAR(255) NOT NULL,
     user_payment_info VARCHAR(100),
 
     FOREIGN KEY (user_id) REFERENCES user_common(user_id)
 );
 
 CREATE TABLE user_wishlist (
-    user_id int,
+    user_id VARCHAR(255) NOT NULL,
     item_id int,
 
     FOREIGN KEY (user_id) REFERENCES user_common(user_id),
@@ -62,7 +61,7 @@ CREATE TABLE user_wishlist (
 CREATE TABLE bid_session (
     session_id int PRIMARY KEY  AUTO_INCREMENT,
     item_id int,
-    seller_id int,
+    seller_id VARCHAR(255) NOT NULL,
     session_status VARCHAR(30),
     session_start_date DATE,
     session_end_date DATE,
@@ -72,8 +71,8 @@ CREATE TABLE bid_session (
 );
 
 CREATE TABLE bid_session_log (
-    session_id INT,
-    user_id INT,
+    session_id int,
+    user_id VARCHAR(255) NOT NULL,
     bid_amount FLOAT(14,2),
     bid_date DATETIME,
 
@@ -109,25 +108,25 @@ INSERT INTO item_image VALUES(3,'/view/images/may-hut-bui-philips-fc6168-800-2')
 INSERT INTO item_image VALUES(3,'/view/images/may-hut-bui-philips-fc6168-800-3');
 INSERT INTO item_image VALUES(4,'/view/images/sacLi-ion');
 
-INSERT INTO user_common VALUES(1,'Trương Quang Hiếu','0123456789','2002-02-04','M',null,'tester01','123',3,null);
-INSERT INTO user_common VALUES(2,'Trần Ngọc Quý','1456238900','1998-02-20','M',null,'tester02','123',3,null);
-INSERT INTO user_common VALUES(3,'Ricardo Milos','0452854491','1985-05-05','M',null,'tester03','123',1,null);
-INSERT INTO user_common VALUES(4,'Death Click','1856040012','2001-12-12','M',null,'tester04','123',1,null);
+INSERT INTO user_common VALUES("tester01",'Trương Quang Hiếu','0123456789','2002-02-04','M',null,'1234',3,null);
+INSERT INTO user_common VALUES("tester02",'Trần Ngọc Quý','1456238900','1998-02-20','M',null,'1234',3,null);
+INSERT INTO user_common VALUES("tester03",'Ricardo Milos','0452854491','1985-05-05','M',null,'1234',1,null);
+INSERT INTO user_common VALUES("tester04",'Death Click','1856040012','2001-12-12','M',null,'1234',1,null);
 
-INSERT INTO user_wishlist VALUES(1,1);
-INSERT INTO user_wishlist VALUES(1,2);
-INSERT INTO user_wishlist VALUES(2,2);
-INSERT INTO user_wishlist VALUES(3,3);
-INSERT INTO user_wishlist VALUES(3,4);
+INSERT INTO user_wishlist VALUES("tester01",1);
+INSERT INTO user_wishlist VALUES("tester01",2);
+INSERT INTO user_wishlist VALUES("tester02",2);
+INSERT INTO user_wishlist VALUES("tester03",3);
+INSERT INTO user_wishlist VALUES("tester03",4);
 
-INSERT INTO bid_session VALUES(1,1,4,'CURRENTLY RUNNING',null,null);
-INSERT INTO bid_session VALUES(2,2,4,'CURRENTLY RUNNING',null,null);
-INSERT INTO bid_session VALUES(3,3,4,'CURRENTLY RUNNING',null,null);
+INSERT INTO bid_session VALUES(1,1,"tester04",'CURRENTLY RUNNING',null,null);
+INSERT INTO bid_session VALUES(2,2,"tester04",'CURRENTLY RUNNING',null,null);
+INSERT INTO bid_session VALUES(3,3,"tester04",'CURRENTLY RUNNING',null,null);
 
-INSERT INTO bid_session_log VALUES(1,1,330000,'2019-11-22 18:12:22');
-INSERT INTO bid_session_log VALUES(2,1,1500000,'2019-11-22 18:01:10');
-INSERT INTO bid_session_log VALUES(2,2,1805000,'2019-11-22 19:45:39');
-INSERT INTO bid_session_log VALUES(2,1,2210000,'2019-11-22 21:04:09');
-INSERT INTO bid_session_log VALUES(2,2,2800000,'2019-11-23 11:12:40');
-INSERT INTO bid_session_log VALUES(3,2,800000,'2019-11-22 18:12:12');
-INSERT INTO bid_session_log VALUES(3,3,1600001,'2019-11-23 17:17:17');
+INSERT INTO bid_session_log VALUES(1,"tester01",330000,'2019-11-22 18:12:22');
+INSERT INTO bid_session_log VALUES(2,"tester01",1500000,'2019-11-22 18:01:10');
+INSERT INTO bid_session_log VALUES(2,"tester02",1805000,'2019-11-22 19:45:39');
+INSERT INTO bid_session_log VALUES(2,"tester01",2210000,'2019-11-22 21:04:09');
+INSERT INTO bid_session_log VALUES(2,"tester02",2800000,'2019-11-23 11:12:40');
+INSERT INTO bid_session_log VALUES(3,"tester02",800000,'2019-11-22 18:12:12');
+INSERT INTO bid_session_log VALUES(3,"tester03",1600001,'2019-11-23 17:17:17');
