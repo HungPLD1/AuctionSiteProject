@@ -72,12 +72,12 @@ func SearchItemByName(c *gin.Context) {
 	itemname := "%" + c.DefaultQuery("name", "") + "%"
 	var itemsList []model.Items
 
-	errGetItems := db.Table("item").
+	errGetItemsDetails := db.Table("item").
 		Select("*").
 		Where("item_name LIKE ?", itemname).
 		Scan(&itemsList).Error
-	if errGetItems != nil {
-		log.Println(errGetItems)
+	if errGetItemsDetails != nil {
+		log.Println(errGetItemsDetails)
 		return
 	}
 	c.JSON(200, itemsList)
@@ -103,7 +103,7 @@ func SearchItemByID(c *gin.Context) {
 //RegisterJSON ...API: Register new Account by JSON
 func RegisterJSON(c *gin.Context) {
 	db := GetDBInstance().Db
-	var newUser model.User
+	var newUser model.UserCommon
 
 	//check if the json form is valid
 	err := c.BindJSON(&newUser)
@@ -153,7 +153,7 @@ func RegisterJSON(c *gin.Context) {
 	passwordHash := string(hash)
 
 	//Filling information in struct
-	newUser = model.User{
+	newUser = model.UserCommon{
 		UserID:    newUser.UserID,
 		UserName:  "",
 		UserPhone: "",
@@ -190,7 +190,7 @@ func RegisterJSON(c *gin.Context) {
 //LoginJSON ...API: Login by JSON
 func LoginJSON(c *gin.Context) {
 	db := GetDBInstance().Db
-	var userLogin model.User
+	var userLogin model.UserCommon
 
 	err := c.BindJSON(&userLogin)
 	if err != nil {
@@ -247,7 +247,7 @@ func UserProfile(c *gin.Context) {
 	}
 	//Get and return user profile
 	db := GetDBInstance().Db
-	var userprofile model.User
+	var userprofile model.UserCommon
 	errprofile := db.Table("user_common").
 		Select("user_name, user_phone,user_birth,user_gender,user_address").
 		Where("user_id = ?", userID).
@@ -263,12 +263,58 @@ func UserProfile(c *gin.Context) {
 	return
 }
 
+//UserProfileUpdate ...Update user info to database
+func UserProfileUpdate(c *gin.Context) {
+	//Get the auth key in header
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	//Get user update info
+	db := GetDBInstance().Db
+	var userUpdate model.UserCommon
+	errJSON := c.BindJSON(&userUpdate)
+	if errJSON != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+	//Register update
+	errUpdate := db.Model(&userUpdate).Omit("user_id", "user_password", "user_access_level", "user_session_token").Where("user_id = ?", userID).Updates(userUpdate).Error
+	if errUpdate != nil {
+		log.Println(errUpdate)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while updating user data",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "Update Success!",
+	})
+	return
+}
+
 /**********************************************************************/
 /**************************INTERNAL FUNCTIONS**************************/
 //check if the username exist in database or not
 func checkUserByID(UserID string) (bool, error) {
 	db := GetDBInstance().Db
-	var usersList []model.User
+	var usersList []model.UserCommon
 	err := db.Table("user_common").Select("user_id").Scan(&usersList).Error
 	if err != nil {
 		return false, err
@@ -284,7 +330,7 @@ func checkUserByID(UserID string) (bool, error) {
 //check if the password is correct or not
 func checkUserPassword(userName string, userPassword string) (bool, error) {
 	db := GetDBInstance().Db
-	var user model.User
+	var user model.UserCommon
 	err := db.Table("user_common").
 		Select("user_password").
 		Where("user_id = ?", userName).
@@ -305,7 +351,7 @@ func checkUserPassword(userName string, userPassword string) (bool, error) {
 *	First check if the username exist, then compare the password.
 *	Return true if data are matched, false otherwise.
 **/
-func validLoginInfo(userLogin model.User) (bool, error) {
+func validLoginInfo(userLogin model.UserCommon) (bool, error) {
 	//Check username
 	var userCheck, passCheck bool
 	var err error
@@ -323,7 +369,7 @@ func validLoginInfo(userLogin model.User) (bool, error) {
 *	Generate a jwt token string to save the login session.
 *	Return string: the jwt token, error: Error when generating the token.
 **/
-func tokenGenerate(user model.User) (string, error) {
+func tokenGenerate(user model.UserCommon) (string, error) {
 	token := jwt_lib.New(jwt_lib.GetSigningMethod("HS256"))
 
 	token.Claims = jwt_lib.MapClaims{
@@ -369,6 +415,7 @@ func checkSessionToken(token string) (string, error) {
 			roleFromToken = int(v.(float64))
 		}*/
 	}
+	//Check if the user exist in database
 	if chk, _ := checkUserByID(userID); chk == false {
 		log.Println("error 1: Invalid Token")
 		return "", nil

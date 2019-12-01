@@ -7,8 +7,6 @@ import (
 	//"log"
 
 	//"time"
-	//_ "github.com/jinzhu/gorm/dialects/sqlite"
-
 	//jwt_lib "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/contrib/jwt"
 	"github.com/gin-gonic/gin"
@@ -39,23 +37,24 @@ func main() {
 		c.String(200, "Welcome to hellogorm")
 	})
 
-	v1 := router.Group("show")
 	//API: Show items by categories and. Show all by default
-	v1.GET("/:categories", controller.Showitems)
+	router.GET("/categories/:categories", controller.Showitems)
 
-	v2 := router.Group("search")
+	v2 := router.Group("item")
 	//API: Search item by name
 	v2.GET("name/", controller.SearchItemByName)
 	//API: Search item by id
 	v2.GET("id/", controller.SearchItemByID)
 
 	//API: Register new Account by JSON
-	router.POST("/register", controller.RegisterJSON)
+	router.POST("/signup", controller.RegisterJSON)
 
 	//API: Login by JSON
 	router.POST("/login", controller.LoginJSON)
 	//API: Show user profile
 	router.GET("/profile",jwt.Auth(model.SecretKey), controller.UserProfile)
+	//API: Modify user profile
+	router.PUT("/profile",jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
 	//API: Show user wishlish
 	router.GET("/wishlist", controller.ShowWishList)
 

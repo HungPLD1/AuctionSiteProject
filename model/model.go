@@ -33,7 +33,7 @@ type Items struct {
 }
 
 //User ...Used by gorm and json
-type User struct {
+type UserCommon struct {
 	UserID    string `gorm:"type:varchar(255)" json:"userid"`
 	UserName  string `gorm:"type:varchar(100)" json:"name"`
 	UserPhone string `gorm:"type:varchar(15)" json:"phone"`
@@ -50,7 +50,7 @@ type SignupLoginResponse struct {
 	ResponseTime string `json:"responseTime"`
 	Code         int    `json:"code"`
 	Message      string `json:"message"`
-	Data         User   `json:"data"`
+	Data         UserCommon   `json:"data"`
 }
 
 //AuthorizationHeader ...Used to get session token in header
