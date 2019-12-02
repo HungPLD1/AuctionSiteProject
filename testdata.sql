@@ -80,6 +80,16 @@ CREATE TABLE bid_session_log (
     FOREIGN KEY (user_id) REFERENCES user_common(user_id)
 );
 
+CREATE TABLE user_review (
+    user_writer VARCHAR(255),
+    user_target VARCHAR(255),
+    review_content TEXT,
+    review_score int(1),
+
+    FOREIGN KEY (user_writer) REFERENCES user_common(user_id),
+    FOREIGN KEY (user_target) REFERENCES user_common(user_id)
+);
+
 INSERT INTO categories VALUES (1,'Video games');
 INSERT INTO categories VALUES (2,'Electronics');
 INSERT INTO categories VALUES (3,'Computers');

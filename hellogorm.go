@@ -37,28 +37,31 @@ func main() {
 		c.String(200, "Welcome to hellogorm")
 	})
 
-	//API: Show items by categories and. Show all by default
-	router.GET("/categories/:categories", controller.Showitems)
-
 	v2 := router.Group("item")
-	//API: Search item by name
-	v2.GET("name/", controller.SearchItemByName)
 	//API: Search item by id
-	v2.GET("id/", controller.SearchItemByID)
+	v2.GET("/:id", controller.GetItemByID)
+	//API: Search item by query (name, categories)
+	v2.GET("/", controller.GetItemByQuery)
+	//API: Get Bid Session
+	router.GET("/session/:id", controller.BidSession)
+	//APT: Get Bid Session Logs
+	router.GET("/logs/:id", controller.BidLogs)
+	//API: Show user profile
+	router.GET("/profile", jwt.Auth(model.SecretKey), controller.UserProfile)
+	//API: Show user wishlist
+	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)
+	//API: Show user review
+	router.GET("review/:id", controller.ShowReview)
 
 	//API: Register new Account by JSON
 	router.POST("/signup", controller.RegisterJSON)
 
 	//API: Login by JSON
 	router.POST("/login", controller.LoginJSON)
-	//API: Show user profile
-	router.GET("/profile", jwt.Auth(model.SecretKey), controller.UserProfile)
 	//API: Modify user profile
 	router.PUT("/profile", jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
-	//API: Show user wishlist
-	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)
-	//API: Bid Session
-	router.GET("/session/:id", controller.BidSession)
+	//API: Add item to wishlist
+	//router.POST("/wishlist", jwt.Auth(model.SecretKey), controller.AddWishlist)
 
 	router.Run(":8080")
 }

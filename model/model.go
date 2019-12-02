@@ -30,17 +30,13 @@ type Items struct {
 	ItemCondition   string `gorm:"type:varchar(30)" json:"itemcondition"`
 	CategoriesID    int    `gorm:"type:int(11)" json:"categoriesid"`
 	ItemDescription string `gorm:"type:text"`
+	ImageLink 		[]string	`json:"imagelink"`
 }
 
 //ItemImage ...Used by gorm and json
 type ItemImage struct {
 	ItemID    int    `gorm:"type:int(11)" json:"itemid"`
 	ImageLink string `gorm:"text" json:"imagelink"`
-}
-
-type Result struct {
-	Item  []Items
-	Image []ItemImage
 }
 
 //UserCommon ...Used by gorm and json
@@ -64,6 +60,22 @@ type BidSession struct {
 	SessionStatus    string    `gorm:"type:varchar(30)" json:"sessionstatus"`
 	SessionStartDate time.Time `gorm:"type:datetime" json:"startdate"`
 	SessionEndDate   time.Time `gorm:"type:datetime" json:"enddate"`
+}
+
+//BidSessionLog ...Used by gorm and json
+type BidSessionLog struct {
+	SessionID	int			`gorm:"type:int(11)" json:"sessionid"`
+	UserID		string		`gorm:"type:varchar(255)" json:"userid"`
+	BidAmount	float64		`gorm:"type:float(14,2)" json:"amount"`
+	BidDate		time.Time	`gorm:"type:datetime" json:"biddate"`
+}
+
+//UserReview ...Used by gorm and json
+type UserReview struct {
+	UserWriter		string	`gorm:"type:varchar(255)" json:"writerid"`
+	UserTarget		string	`gorm:"type:varchar(255)" json:"targetid"`
+	ReviewContent	string	`gorm:"type:text" json:"content"`
+	ReviewScore		int		`gorm:"type:int(1)" json:"score"`
 }
 
 //UserWishlist ...used by gorm and json

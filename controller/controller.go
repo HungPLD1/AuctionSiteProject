@@ -36,57 +36,10 @@ func GetDBInstance() *DatabaseB {
 	return instance
 }
 
-/**	Items table
-*	id	name	bidding_status	item_condition	id_categories	description
-**/
-
-//Showitems ...API: Show item by categories. Show all by default, result are JSON form
-func Showitems(c *gin.Context) {
+//GetItemByID ...API: Search item by ID, result are JSON form
+func GetItemByID(c *gin.Context) {
 	db := GetDBInstance().Db
-	categoriesName := c.Param("categories")
-	var itemsList []model.Items
-
-	if categoriesName == "all" {
-		errGetItems := db.Table("item").Select("*").Scan(&itemsList).Error
-		if errGetItems != nil {
-			log.Println(errGetItems)
-			return
-		}
-		c.JSON(200, itemsList)
-	} else {
-		errGetItems := db.Table("item, categories").
-			Select("item.*").
-			Where("categories.categories_name = ? AND item.categories_id = categories.categories_id", categoriesName).
-			Scan(&itemsList).Error
-		if errGetItems != nil {
-			log.Println(errGetItems)
-			return
-		}
-		c.JSON(200, itemsList)
-	}
-}
-
-//SearchItemByName ...API: Search item by name, result are JSON form
-func SearchItemByName(c *gin.Context) {
-	db := GetDBInstance().Db
-	itemname := "%" + c.DefaultQuery("name", "") + "%"
-	var itemsList []model.Items
-
-	errGetItemsDetails := db.Table("item").
-		Select("*").
-		Where("item_name LIKE ?", itemname).
-		Scan(&itemsList).Error
-	if errGetItemsDetails != nil {
-		log.Println(errGetItemsDetails)
-		return
-	}
-	c.JSON(200, itemsList)
-}
-
-//SearchItemByID ...API: Search item by ID, result are JSON form
-func SearchItemByID(c *gin.Context) {
-	db := GetDBInstance().Db
-	itemid := c.DefaultQuery("id", "0")
+	itemid := c.Param("id")
 	var itemsList []model.Items
 
 	errGetItems := db.Table("item").
@@ -95,9 +48,36 @@ func SearchItemByID(c *gin.Context) {
 		Scan(&itemsList).Error
 	if errGetItems != nil {
 		log.Println(errGetItems)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching item data",
+		})
 		return
 	}
 	c.JSON(200, itemsList)
+}
+
+//GetItemByQuery ...API: Search item by query, result are JSON form
+func GetItemByQuery(c *gin.Context) {
+	db := GetDBInstance().Db
+	itemname := "%" + c.DefaultQuery("name", "all") + "%"
+	itemcategories := c.DefaultQuery("categories", "all")
+
+	var itemsList []model.Items
+
+	errGetItems := db.Table("item").
+		Select("item.*").
+		Where("(item_name LIKE ? OR '%all%' = ?) AND (categories_id = ? OR 'all' = ?)", itemname, itemname, itemcategories, itemcategories).
+		Scan(&itemsList).
+		Error
+	if errGetItems != nil {
+		log.Println(errGetItems)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching item data",
+		})
+		return
+	}
+	c.JSON(200, itemsList)
+	return
 }
 
 //RegisterJSON ...API: Register new Account by JSON
@@ -338,37 +318,22 @@ func ShowWishList(c *gin.Context) {
 	db := GetDBInstance().Db
 	var wishlist []model.Items
 	var imagelink []model.ItemImage
-	/*errWishList := db.Table("item").
-		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
-		Joins("JOIN item_image ON item.item_id = item_image.item_id").
-		Where("user_wishlist.user_id = ?", userID).
-		Select("DISTINCT item.*, item_image.image_link as image_link").
-		Scan(&wishlist).
-		Scan(&imagelink).
-		Error
-	if errWishList != nil {
-		log.Println(errWishList)
-		return
-	}*/
 	db.Table("item").
 		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
 		Where("user_wishlist.user_id = ?", userID).
 		Select("item.*").
 		Scan(&wishlist)
 
-	var result = model.Result{
-		Item: wishlist,
-	}
-
-	for _, item := range wishlist {
+	for i, item := range wishlist {
 		db.Table("item_image").
 			Where("item_id = ?", item.ItemID).
 			Select("*").
 			Scan(&imagelink)
-		result.Image = append(result.Image, imagelink...)
+		for _, link := range imagelink {
+			wishlist[i].ImageLink = append([]string(wishlist[i].ImageLink), link.ImageLink)
+		}
 	}
-
-	c.JSON(200, result)
+	c.JSON(200, wishlist)
 	return
 }
 
@@ -385,11 +350,60 @@ func BidSession(c *gin.Context) {
 		Error
 	if errGetSession != nil {
 		log.Println(errGetSession)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching session data",
+		})
 		return
 	}
 	c.JSON(200, session)
 	return
 }
+
+//BidLogs ...API: Get Bid Session Logs
+func BidLogs(c *gin.Context) {
+	db := GetDBInstance().Db
+	sessionid := c.Param("id")
+	var logs []model.BidSessionLog
+
+	errgetLogs := db.Table("bid_session_log").
+		Where("session_id = ?", sessionid).
+		Select("user_id, bid_amount, bid_date").
+		Scan(&logs).
+		Error
+	if errgetLogs != nil {
+		log.Println(errgetLogs)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching bidding data",
+		})
+		return
+	}
+	c.JSON(200, logs)
+	return
+}
+
+//ShowReview ...API: Show review of user
+func ShowReview(c *gin.Context) {
+	db := GetDBInstance().Db
+	userid := c.Param("id")
+	var review []model.UserReview
+
+	errgetReview := db.Table("user_review").
+		Where("user_target = ?", userid).
+		Select("*").
+		Scan(&review).
+		Error
+	if errgetReview != nil {
+		log.Println(errgetReview)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching review data",
+		})
+		return
+	}
+	c.JSON(200, review)
+	return
+}
+
+//AddWishList ...API: Search for session id
 
 /**********************************************************************/
 /**************************INTERNAL FUNCTIONS**************************/
@@ -459,7 +473,7 @@ func tokenGenerate(user model.UserCommon) (string, error) {
 	token.Claims = jwt_lib.MapClaims{
 		"userId": user.UserID,
 		"Role":   user.UserAccessLevel,
-		"exp":    time.Now().Add(time.Hour * 1).Unix(),
+		"exp":    time.Now().Add(time.Hour * 24).Unix(),
 	}
 	return token.SignedString([]byte(model.SecretKey))
 }
