@@ -52,11 +52,13 @@ func main() {
 	//API: Login by JSON
 	router.POST("/login", controller.LoginJSON)
 	//API: Show user profile
-	router.GET("/profile",jwt.Auth(model.SecretKey), controller.UserProfile)
+	router.GET("/profile", jwt.Auth(model.SecretKey), controller.UserProfile)
 	//API: Modify user profile
-	router.PUT("/profile",jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
+	router.PUT("/profile", jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
 	//API: Show user wishlish
 	router.GET("/wishlist", controller.ShowWishList)
+	//API: Bid Session
+	//router.GET("/session/:id", controller.BidSession)
 
 	router.Run(":8080")
 }

@@ -295,7 +295,12 @@ func UserProfileUpdate(c *gin.Context) {
 		return
 	}
 	//Register update
-	errUpdate := db.Model(&userUpdate).Omit("user_id", "user_password", "user_access_level", "user_session_token").Where("user_id = ?", userID).Updates(userUpdate).Error
+	errUpdate := db.Table("user_common").
+		Model(&userUpdate).
+		Omit("user_id", "user_password", "user_access_level", "user_session_token").
+		Where("user_id = ?", userID).
+		Updates(userUpdate).
+		Error
 	if errUpdate != nil {
 		log.Println(errUpdate)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -314,17 +319,19 @@ func UserProfileUpdate(c *gin.Context) {
 //check if the username exist in database or not
 func checkUserByID(UserID string) (bool, error) {
 	db := GetDBInstance().Db
-	var usersList []model.UserCommon
-	err := db.Table("user_common").Select("user_id").Scan(&usersList).Error
+	var usersList model.UserCommon
+	err := db.Table("user_common").
+		Select("user_id").
+		Where("user_id = ?", UserID).
+		Scan(&usersList).
+		Error
 	if err != nil {
 		return false, err
 	}
-	for _, usertmp := range usersList {
-		if UserID == usertmp.UserID {
-			return true, nil
-		}
+	if usersList.UserID != UserID {
+		return false, nil
 	}
-	return false, nil
+	return true, nil
 }
 
 //check if the password is correct or not

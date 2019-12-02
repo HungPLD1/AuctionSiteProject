@@ -47,10 +47,10 @@ type UserCommon struct {
 
 //SignupLoginResponse ...Respond form
 type SignupLoginResponse struct {
-	ResponseTime string `json:"responseTime"`
-	Code         int    `json:"code"`
-	Message      string `json:"message"`
-	Data         UserCommon   `json:"data"`
+	ResponseTime string     `json:"responseTime"`
+	Code         int        `json:"code"`
+	Message      string     `json:"message"`
+	Data         UserCommon `json:"data"`
 }
 
 //AuthorizationHeader ...Used to get session token in header
