@@ -314,6 +314,83 @@ func UserProfileUpdate(c *gin.Context) {
 	return
 }
 
+//ShowWishList ...API: Show user WishList, result are JSON form
+func ShowWishList(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+
+	db := GetDBInstance().Db
+	var wishlist []model.Items
+	var imagelink []model.ItemImage
+	/*errWishList := db.Table("item").
+		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
+		Joins("JOIN item_image ON item.item_id = item_image.item_id").
+		Where("user_wishlist.user_id = ?", userID).
+		Select("DISTINCT item.*, item_image.image_link as image_link").
+		Scan(&wishlist).
+		Scan(&imagelink).
+		Error
+	if errWishList != nil {
+		log.Println(errWishList)
+		return
+	}*/
+	db.Table("item").
+		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
+		Where("user_wishlist.user_id = ?", userID).
+		Select("item.*").
+		Scan(&wishlist)
+
+	var result = model.Result{
+		Item: wishlist,
+	}
+
+	for _, item := range wishlist {
+		db.Table("item_image").
+			Where("item_id = ?", item.ItemID).
+			Select("*").
+			Scan(&imagelink)
+		result.Image = append(result.Image, imagelink...)
+	}
+
+	c.JSON(200, result)
+	return
+}
+
+//BidSession ...API: Search for session id
+func BidSession(c *gin.Context) {
+	db := GetDBInstance().Db
+	sessionid := c.Param("id")
+	var session model.BidSession
+
+	errGetSession := db.Table("bid_session").
+		Select("*").
+		Where("session_id = ?", sessionid).
+		Scan(&session).
+		Error
+	if errGetSession != nil {
+		log.Println(errGetSession)
+		return
+	}
+	c.JSON(200, session)
+	return
+}
+
 /**********************************************************************/
 /**************************INTERNAL FUNCTIONS**************************/
 //check if the username exist in database or not
@@ -433,9 +510,3 @@ func checkSessionToken(token string) (string, error) {
 }
 
 /****************************NOT YET INCLUDED*************************/
-
-//ShowWishList ...API: Show user WishList, result are JSON form
-func ShowWishList(c *gin.Context) {
-	//db := GetDBInstance().Db
-	//var itemsList []model.Items
-}

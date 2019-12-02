@@ -55,10 +55,10 @@ func main() {
 	router.GET("/profile", jwt.Auth(model.SecretKey), controller.UserProfile)
 	//API: Modify user profile
 	router.PUT("/profile", jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
-	//API: Show user wishlish
-	router.GET("/wishlist", controller.ShowWishList)
+	//API: Show user wishlist
+	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)
 	//API: Bid Session
-	//router.GET("/session/:id", controller.BidSession)
+	router.GET("/session/:id", controller.BidSession)
 
 	router.Run(":8080")
 }

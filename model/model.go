@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	//"time"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -22,17 +22,28 @@ type Config struct {
 	} `json:"database"`
 }
 
-//Items ...Used by gorm
+//Items ...Used by gorm and json
 type Items struct {
-	ItemID            int
-	ItemName          string `gorm:"type:varchar(255)"`
-	ItemBiddingstatus string `gorm:"type:varchar(20)"`
-	ItemCondition     string `gorm:"type:varchar(10)"`
-	CategoriesID      int
-	ItemDescription   string `gorm:"type:varchar(255)"`
+	ItemID          int    `gorm:"type:int(11)" json:"itemid"`
+	ItemName        string `gorm:"type:varchar(255) json:"itemname"`
+	ItemSaleStatus  string `gorm:"type:varchar(30) json:"itemsalestatus"`
+	ItemCondition   string `gorm:"type:varchar(30)" json:"itemcondition"`
+	CategoriesID    int    `gorm:"type:int(11)" json:"categoriesid"`
+	ItemDescription string `gorm:"type:text"`
 }
 
-//User ...Used by gorm and json
+//ItemImage ...Used by gorm and json
+type ItemImage struct {
+	ItemID    int    `gorm:"type:int(11)" json:"itemid"`
+	ImageLink string `gorm:"text" json:"imagelink"`
+}
+
+type Result struct {
+	Item  []Items
+	Image []ItemImage
+}
+
+//UserCommon ...Used by gorm and json
 type UserCommon struct {
 	UserID    string `gorm:"type:varchar(255)" json:"userid"`
 	UserName  string `gorm:"type:varchar(100)" json:"name"`
@@ -43,6 +54,22 @@ type UserCommon struct {
 	UserPassword     string `gorm:"type:varchar(255)" json:"password"`
 	UserAccessLevel  int    `gorm:"type:int" json:"accesslevel"`
 	UserSessionToken string `gorm:"type:TEXT" json:"token"`
+}
+
+//BidSession ...Used by gorm and json
+type BidSession struct {
+	SessionID        int       `gorm:"type:int(11)" json:"sessionid"`
+	ItemID           int       `gorm:"type:int(11)" json:"itemid"`
+	SellerID         string    `gorm:"type:varchar(255)" json:"sellerid"`
+	SessionStatus    string    `gorm:"type:varchar(30)" json:"sessionstatus"`
+	SessionStartDate time.Time `gorm:"type:datetime" json:"startdate"`
+	SessionEndDate   time.Time `gorm:"type:datetime" json:"enddate"`
+}
+
+//UserWishlist ...used by gorm and json
+type UserWishlist struct {
+	UserID string `gorm:"type:varchar(255)" json:"userid"`
+	ItemID int    `gorm:"type:int(11)" json:"itemid"`
 }
 
 //SignupLoginResponse ...Respond form
