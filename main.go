@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-
 )
 
 func main() {
@@ -34,7 +33,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-	//router.Use(gin.LoggerWithFormatter(loggerformat))
+	router.Use(CORSMiddleware()) //CORS config
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	//swagger init
@@ -74,4 +73,22 @@ func main() {
 	//router.POST("/wishlist", jwt.Auth(model.SecretKey), controller.AddWishlist)
 
 	router.Run(":8080")
+}
+
+//CORSMiddleware ...Allow ACAO for all request and for all methods
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "application/json")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Max")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+		} else {
+			c.Next()
+		}
+	}
 }
