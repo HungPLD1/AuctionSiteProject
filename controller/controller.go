@@ -36,13 +36,11 @@ func GetDBInstance() *DatabaseB {
 	return instance
 }
 
-//GetItemByID ...API: Search item by ID, result are JSON form
-//  @Description Get the item's informations and pictures by ID
-//  @Param id path string the item ID number
+//  @Description Get the item's informations and pictures by ID, return a JSON form
+//  @Param id path string true "the item ID number"
 //  @Success 200 {object} model.Items
-//  @Failure 500 message : Error while fetching item data
+//	@Failure 500 {body} string "Error message"
 //  @Router /item/:id [GET]
-
 func GetItemByID(c *gin.Context) {
 	db := GetDBInstance().Db
 	itemid := c.Param("id")
@@ -73,7 +71,12 @@ func GetItemByID(c *gin.Context) {
 	c.JSON(200, itemsList)
 }
 
-//GetItemByQuery ...API: Search item by query, result are JSON form
+//  @Description Search item by query, return a JSON form
+//  @Param name query string true "Name of the item (or part of it)"
+// 	@Param categories query string true "Item Categories by number"
+//  @Success 200 {object} model.Items
+//	@Failure 500 {body} string "Error message"
+//  @Router /item [GET]
 func GetItemByQuery(c *gin.Context) {
 	db := GetDBInstance().Db
 	itemname := "%" + c.DefaultQuery("name", "all") + "%"
@@ -107,7 +110,38 @@ func GetItemByQuery(c *gin.Context) {
 	return
 }
 
-//RegisterJSON ...API: Register new Account by JSON
+//  @Description Search categories by id, return all by default, return a JSON form
+//  @Param id query string true "id of categories, if empty then return all"
+//  @Success 200 {object} model.Categories
+//	@Failure 500 {body} string "Error message"
+//  @Router /categories [GET]
+func SearchCategories(c *gin.Context) {
+	db := GetDBInstance().Db
+	var categories []model.Categories
+	id := c.DefaultQuery("id", "all")
+
+	errGetCategories := db.Table("categories").
+		Where("categories_id = ? OR 'all' = ?", id, id).
+		Scan(&categories).
+		Error
+	if errGetCategories != nil {
+		log.Println(errGetCategories)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while fetching categories data",
+		})
+		return
+	}
+	c.JSON(200, categories)
+	return
+}
+
+//  @Description Register new Account in JSON form, return a jwt session token in JSON form
+//  @Param userid body string true "username"
+//  @Param password body string true "password"
+//  @Success 200 {body} string "Session token"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /signup [POST]
 func RegisterJSON(c *gin.Context) {
 	db := GetDBInstance().Db
 	var newUser model.UserCommon
@@ -194,7 +228,13 @@ func RegisterJSON(c *gin.Context) {
 	return
 }
 
-//LoginJSON ...API: Login by JSON
+//  @Description Login by JSON form, return a jwt session token in JSON form
+//  @Param userid body string true "username"
+//  @Param password body string true "password"
+//  @Success 200 {body} string "Session token"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /login [POST]
 func LoginJSON(c *gin.Context) {
 	db := GetDBInstance().Db
 	var userLogin model.UserCommon
@@ -226,12 +266,34 @@ func LoginJSON(c *gin.Context) {
 		})
 		return
 	}
-	//db.Save(&userLogin)
-	db.Table("user_common").Where("user_id = ?", userLogin.UserID).Update("user_session_token", userLogin.UserSessionToken)
+
+	//Add Token to database
+	errAddToken := db.Table("user_common").
+		Where("user_id = ?", userLogin.UserID).
+		Update("user_session_token", userLogin.UserSessionToken).
+		Error
+	if errAddToken != nil {
+		log.Println(errAddToken)
+		c.JSON(500, gin.H{
+			"message": "Error while saving session token",
+		})
+		return
+	}
+
+	//return Session token
+	c.JSON(200, gin.H{
+		"sessiontoken": userLogin.UserSessionToken,
+	})
 	return
 }
 
-//UserProfile ...API: Show user profile stored in jwt session token
+//  @Description Show user profile, return user general profile in JSON form
+//  @Param Authorization header string true "Session token"
+//  @Success 200 {object} model.UserCommon
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /profile [GET]
 func UserProfile(c *gin.Context) {
 	//Get the auth key in header
 	var headerInfo model.AuthorizationHeader
@@ -270,7 +332,13 @@ func UserProfile(c *gin.Context) {
 	return
 }
 
-//UserProfileUpdate ...Update user info to database
+//  @Description Modify/Update user profile, return message in JSON form
+//  @Param Authorization header string true "Session token"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /profile [PUT]
 func UserProfileUpdate(c *gin.Context) {
 	//Get the auth key in header
 	var headerInfo model.AuthorizationHeader
@@ -321,7 +389,13 @@ func UserProfileUpdate(c *gin.Context) {
 	return
 }
 
-//ShowWishList ...API: Show user WishList, result are JSON form
+//  @Description Show user WishList, return a JSON form
+//  @Param Authorization header string true "Session token"
+//  @Success 200 {object} model.Items
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /wishlist [GET]
 func ShowWishList(c *gin.Context) {
 	var headerInfo model.AuthorizationHeader
 	if err := c.ShouldBindHeader(&headerInfo); err != nil {
@@ -364,7 +438,11 @@ func ShowWishList(c *gin.Context) {
 	return
 }
 
-//BidSession ...API: Search for session id
+//  @Description Show Session information by ID, return a JSON form
+//	@Param id path string true "Session id"
+//  @Success 200 {object} model.BidSession
+//	@Failure 500 {body} string "Error message"
+//  @Router /session/:id [GET]
 func BidSession(c *gin.Context) {
 	db := GetDBInstance().Db
 	sessionid := c.Param("id")
@@ -386,7 +464,11 @@ func BidSession(c *gin.Context) {
 	return
 }
 
-//BidLogs ...API: Get Bid Session Logs
+//  @Description Get Bid Session Logs by session ID, return a JSON form
+//	@Param id path string true "Session id"
+//  @Success 200 {object} model.BidSessionLog
+//	@Failure 500 {body} string "Error message"
+//  @Router /logs/:id [GET]
 func BidLogs(c *gin.Context) {
 	db := GetDBInstance().Db
 	sessionid := c.Param("id")
@@ -408,7 +490,11 @@ func BidLogs(c *gin.Context) {
 	return
 }
 
-//ShowReview ...API: Show review of user
+//  @Description Show review of User by User ID, return a JSON form
+//	@Param id path string true "User id"
+//  @Success 200 {object} model.UserReview
+//	@Failure 500 {body} string "Error message"
+//  @Router /review/:id [GET]
 func ShowReview(c *gin.Context) {
 	db := GetDBInstance().Db
 	userid := c.Param("id")

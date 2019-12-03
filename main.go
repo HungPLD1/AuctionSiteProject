@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
 )
 
 func main() {
@@ -58,7 +59,9 @@ func main() {
 	//API: Show user wishlist
 	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)
 	//API: Show user review
-	router.GET("review/:id", controller.ShowReview)
+	router.GET("/review/:id", controller.ShowReview)
+	//API: Search categories by id, return all by default
+	router.GET("/categories", controller.SearchCategories)
 
 	//API: Register new Account by JSON
 	router.POST("/signup", controller.RegisterJSON)

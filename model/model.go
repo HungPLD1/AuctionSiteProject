@@ -24,13 +24,19 @@ type Config struct {
 
 //Items ...Used by gorm and json
 type Items struct {
-	ItemID          int    `gorm:"type:int(11)" json:"itemid"`
-	ItemName        string `gorm:"type:varchar(255) json:"itemname"`
-	ItemSaleStatus  string `gorm:"type:varchar(30) json:"itemsalestatus"`
-	ItemCondition   string `gorm:"type:varchar(30)" json:"itemcondition"`
-	CategoriesID    int    `gorm:"type:int(11)" json:"categoriesid"`
-	ItemDescription string `gorm:"type:text"`
-	ImageLink 		[]string	`json:"imagelink"`
+	ItemID          int      `gorm:"type:int(11)" json:"itemid"`
+	ItemName        string   `gorm:"type:varchar(255) json:"itemname"`
+	ItemSaleStatus  string   `gorm:"type:varchar(30) json:"itemsalestatus"`
+	ItemCondition   string   `gorm:"type:varchar(30)" json:"itemcondition"`
+	CategoriesID    int      `gorm:"type:int(11)" json:"categoriesid"`
+	ItemDescription string   `gorm:"type:text"`
+	ImageLink       []string `json:"imagelink"`
+}
+
+//Categories ...Used by gorm and json
+type Categories struct {
+	CategoriesID   int    `gorm:"type:int(11)" json:"categoriesid"`
+	CategoriesName string `gorm:"type:varchar(255) json:"categoriesname"`
 }
 
 //ItemImage ...Used by gorm and json
@@ -64,18 +70,18 @@ type BidSession struct {
 
 //BidSessionLog ...Used by gorm and json
 type BidSessionLog struct {
-	SessionID	int			`gorm:"type:int(11)" json:"sessionid"`
-	UserID		string		`gorm:"type:varchar(255)" json:"userid"`
-	BidAmount	float64		`gorm:"type:float(14,2)" json:"amount"`
-	BidDate		time.Time	`gorm:"type:datetime" json:"biddate"`
+	SessionID int       `gorm:"type:int(11)" json:"sessionid"`
+	UserID    string    `gorm:"type:varchar(255)" json:"userid"`
+	BidAmount float64   `gorm:"type:float(14,2)" json:"amount"`
+	BidDate   time.Time `gorm:"type:datetime" json:"biddate"`
 }
 
 //UserReview ...Used by gorm and json
 type UserReview struct {
-	UserWriter		string	`gorm:"type:varchar(255)" json:"writerid"`
-	UserTarget		string	`gorm:"type:varchar(255)" json:"targetid"`
-	ReviewContent	string	`gorm:"type:text" json:"content"`
-	ReviewScore		int		`gorm:"type:int(1)" json:"score"`
+	UserWriter    string `gorm:"type:varchar(255)" json:"writerid"`
+	UserTarget    string `gorm:"type:varchar(255)" json:"targetid"`
+	ReviewContent string `gorm:"type:text" json:"content"`
+	ReviewScore   int    `gorm:"type:int(1)" json:"score"`
 }
 
 //UserWishlist ...used by gorm and json

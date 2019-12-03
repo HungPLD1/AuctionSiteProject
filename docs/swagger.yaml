@@ -1,5 +1,338 @@
+definitions:
+  model.BidSession:
+    properties:
+      enddate:
+        type: string
+      itemid:
+        type: integer
+      sellerid:
+        type: string
+      sessionid:
+        type: integer
+      sessionstatus:
+        type: string
+      startdate:
+        type: string
+    type: object
+  model.BidSessionLog:
+    properties:
+      amount:
+        type: number
+      biddate:
+        type: string
+      sessionid:
+        type: integer
+      userid:
+        type: string
+    type: object
+  model.Categories:
+    properties:
+      categoriesName:
+        type: string
+      categoriesid:
+        type: integer
+    type: object
+  model.Items:
+    properties:
+      categoriesid:
+        type: integer
+      imagelink:
+        items:
+          type: string
+        type: array
+      itemDescription:
+        type: string
+      itemName:
+        type: string
+      itemSaleStatus:
+        type: string
+      itemcondition:
+        type: string
+      itemid:
+        type: integer
+    type: object
+  model.UserCommon:
+    properties:
+      accesslevel:
+        type: integer
+      address:
+        type: string
+      gender:
+        description: "UserBirth \t\t\ttime.Time `gorm:\"type:date\" json:\"birthdate\"`"
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      token:
+        type: string
+      userid:
+        type: string
+    type: object
+  model.UserReview:
+    properties:
+      content:
+        type: string
+      score:
+        type: integer
+      targetid:
+        type: string
+      writerid:
+        type: string
+    type: object
 info:
   contact: {}
   license: {}
-paths: {}
+paths:
+  /categories:
+    get:
+      description: Search categories by id, return all by default, return a JSON form
+      parameters:
+      - description: id of categories, if empty then return all
+        in: query
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Categories'
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /item:
+    get:
+      description: Search item by query, return a JSON form
+      parameters:
+      - description: Name of the item (or part of it)
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Item Categories by number
+        in: query
+        name: categories
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Items'
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /item/:id:
+    get:
+      description: Get the item's informations and pictures by ID, return a JSON form
+      parameters:
+      - description: the item ID number
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Items'
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /login:
+    post:
+      description: Login by JSON form, return a jwt session token in JSON form
+      parameters:
+      - description: username
+        in: body
+        name: userid
+        required: true
+        schema:
+          type: string
+      - description: password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Session token
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /logs/:id:
+    get:
+      description: Get Bid Session Logs by session ID, return a JSON form
+      parameters:
+      - description: Session id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BidSessionLog'
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /profile:
+    get:
+      description: Show user profile, return user general profile in JSON form
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserCommon'
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+    put:
+      description: Modify/Update user profile, return message in JSON form
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /review/:id:
+    get:
+      description: Show review of User by User ID, return a JSON form
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserReview'
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /session/:id:
+    get:
+      description: Show Session information by ID, return a JSON form
+      parameters:
+      - description: Session id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BidSession'
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /signup:
+    post:
+      description: Register new Account in JSON form, return a jwt session token in
+        JSON form
+      parameters:
+      - description: username
+        in: body
+        name: userid
+        required: true
+        schema:
+          type: string
+      - description: password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Session token
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /wishlist:
+    get:
+      description: Show user WishList, return a JSON form
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Items'
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
 swagger: "2.0"
