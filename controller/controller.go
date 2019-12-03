@@ -37,10 +37,18 @@ func GetDBInstance() *DatabaseB {
 }
 
 //GetItemByID ...API: Search item by ID, result are JSON form
+//  @Description Get the item's informations and pictures by ID
+//  @Param id path string the item ID number
+//  @Success 200 {object} model.Items
+//  @Failure 500 message : Error while fetching item data
+//  @Router /item/:id [GET]
+
 func GetItemByID(c *gin.Context) {
 	db := GetDBInstance().Db
 	itemid := c.Param("id")
+
 	var itemsList []model.Items
+	var imagelink []model.ItemImage
 
 	errGetItems := db.Table("item").
 		Select("*").
@@ -53,6 +61,15 @@ func GetItemByID(c *gin.Context) {
 		})
 		return
 	}
+	for i, item := range itemsList {
+		db.Table("item_image").
+			Where("item_id = ?", item.ItemID).
+			Select("*").
+			Scan(&imagelink)
+		for _, link := range imagelink {
+			itemsList[i].ImageLink = append([]string(itemsList[i].ImageLink), link.ImageLink)
+		}
+	}
 	c.JSON(200, itemsList)
 }
 
@@ -63,6 +80,7 @@ func GetItemByQuery(c *gin.Context) {
 	itemcategories := c.DefaultQuery("categories", "all")
 
 	var itemsList []model.Items
+	var imagelink []model.ItemImage
 
 	errGetItems := db.Table("item").
 		Select("item.*").
@@ -75,6 +93,15 @@ func GetItemByQuery(c *gin.Context) {
 			"message": "Error while fetching item data",
 		})
 		return
+	}
+	for i, item := range itemsList {
+		db.Table("item_image").
+			Where("item_id = ?", item.ItemID).
+			Select("*").
+			Scan(&imagelink)
+		for _, link := range imagelink {
+			itemsList[i].ImageLink = append([]string(itemsList[i].ImageLink), link.ImageLink)
+		}
 	}
 	c.JSON(200, itemsList)
 	return
