@@ -64,13 +64,16 @@ func main() {
 
 	//API: Register new Account by JSON
 	router.POST("/signup", controller.RegisterJSON)
-
 	//API: Login by JSON
 	router.POST("/login", controller.LoginJSON)
+	//API: Add new item to wishlist
+	router.POST("/wishlist/:id", jwt.Auth(model.SecretKey), controller.AddItemToWishList)
+
 	//API: Modify user profile
 	router.PUT("/profile", jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
-	//API: Add item to wishlist
-	//router.POST("/wishlist", jwt.Auth(model.SecretKey), controller.AddWishlist)
+
+	//API: Delete item from wishlist
+	router.DELETE("/wishlist/:id", jwt.Auth(model.SecretKey), controller.RemoveItemFromWishList)
 
 	router.Run(":8080")
 }

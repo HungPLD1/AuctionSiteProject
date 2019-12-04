@@ -4,6 +4,7 @@ import (
 	"hellogorm/model"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -49,8 +50,8 @@ func GetItemByID(c *gin.Context) {
 	var imagelink []model.ItemImage
 
 	errGetItems := db.Table("item").
-		Select("*").
 		Where("item_id = ?", itemid).
+		Select("*").
 		Scan(&itemsList).Error
 	if errGetItems != nil {
 		log.Println(errGetItems)
@@ -86,8 +87,8 @@ func GetItemByQuery(c *gin.Context) {
 	var imagelink []model.ItemImage
 
 	errGetItems := db.Table("item").
-		Select("item.*").
 		Where("(item_name LIKE ? OR '%all%' = ?) AND (categories_id = ? OR 'all' = ?)", itemname, itemname, itemcategories, itemcategories).
+		Select("item.*").
 		Scan(&itemsList).
 		Error
 	if errGetItems != nil {
@@ -122,6 +123,7 @@ func SearchCategories(c *gin.Context) {
 
 	errGetCategories := db.Table("categories").
 		Where("categories_id = ? OR 'all' = ?", id, id).
+		Select("*").
 		Scan(&categories).
 		Error
 	if errGetCategories != nil {
@@ -274,7 +276,7 @@ func LoginJSON(c *gin.Context) {
 		Error
 	if errAddToken != nil {
 		log.Println(errAddToken)
-		c.JSON(500, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Error while saving session token",
 		})
 		return
@@ -318,8 +320,8 @@ func UserProfile(c *gin.Context) {
 	db := GetDBInstance().Db
 	var userprofile model.UserCommon
 	errprofile := db.Table("user_common").
-		Select("user_name, user_phone,user_birth,user_gender,user_address").
 		Where("user_id = ?", userID).
+		Select("user_name, user_phone,user_birth,user_gender,user_address").
 		Scan(&userprofile).Error
 	if errprofile != nil {
 		log.Println(errprofile)
@@ -438,6 +440,114 @@ func ShowWishList(c *gin.Context) {
 	return
 }
 
+// @Description Add new item to wishlist, return a JSON message
+// @Param Authorization header string true "Session token"
+// @Param itemid path string true "Item id to be added to wishlist"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /wishlist/:id [POST]
+func AddItemToWishList(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userid string
+	var errtoken error
+	if userid, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request",
+		})
+		return
+	} else if userid == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+
+	db := GetDBInstance().Db
+	id := c.Param("id")
+	//check if the item exist in database
+	if NotExist := db.Table("item").
+		Where("item_id = ?", id).
+		First(&model.Items{}).
+		RecordNotFound(); NotExist == true {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Item ID!",
+		})
+		return
+	}
+	//Attach item ID to wishlist
+	itemid, _ := strconv.Atoi(id)
+	wishlist := model.UserWishlist{
+		UserID: userid,
+		ItemID: itemid,
+	}
+	errCreate := db.Table("user_wishlist").Create(&wishlist).Error
+	if errCreate != nil {
+		log.Println(errCreate)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Server Error: Cannot add item to wishlist!",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "Item successfully added to wishlist!",
+	})
+	return
+}
+
+// @Description Remove item from wishlist, return a JSON message
+// @Param Authorization header string true "Session token"
+// @Param itemid path string true "Item id to be removed from wishlist"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /wishlist/:id [DELETE]
+func RemoveItemFromWishList(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userid string
+	var errtoken error
+	if userid, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request",
+		})
+		return
+	} else if userid == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+
+	db := GetDBInstance().Db
+	id := c.Param("id")
+	//Delete item from wishlist
+	errDelete := db.Table("user_wishlist").
+		Where("item_id = ?", id).
+		Delete(&model.UserWishlist{}).
+		Error
+	if errDelete != nil {
+		log.Println(errDelete)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Server Error: Cannot remove item from wishlist!",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "Item successfully removed from wishlist!",
+	})
+	return
+}
+
 //  @Description Show Session information by ID, return a JSON form
 //	@Param id path string true "Session id"
 //  @Success 200 {object} model.BidSession
@@ -449,8 +559,8 @@ func BidSession(c *gin.Context) {
 	var session model.BidSession
 
 	errGetSession := db.Table("bid_session").
-		Select("*").
 		Where("session_id = ?", sessionid).
+		Select("*").
 		Scan(&session).
 		Error
 	if errGetSession != nil {
@@ -525,8 +635,8 @@ func checkUserByID(UserID string) (bool, error) {
 	db := GetDBInstance().Db
 	var usersList model.UserCommon
 	err := db.Table("user_common").
-		Select("user_id").
 		Where("user_id = ?", UserID).
+		Select("user_id").
 		Scan(&usersList).
 		Error
 	if err != nil {
@@ -543,8 +653,8 @@ func checkUserPassword(userName string, userPassword string) (bool, error) {
 	db := GetDBInstance().Db
 	var user model.UserCommon
 	err := db.Table("user_common").
-		Select("user_password").
 		Where("user_id = ?", userName).
+		Select("user_password").
 		Scan(&user).Error
 	if err != nil {
 		return false, err
@@ -637,3 +747,14 @@ func checkSessionToken(token string) (string, error) {
 }
 
 /****************************NOT YET INCLUDED*************************/
+
+/****************************TO DO LIST*************************/
+/*
+GENERAL:
+Tách controller.go ra làm nhiều files nhỏ để dễ tìm kiếm Chẳng hản như get.go, post.go, put.go, delete.go
+Phải tạo model error message thay vì sử dụng gin.H{} . Về sau có thể tích hợp vào swagger
+
+API:
+API delete wishlist kiểm tra item id có tồn tại trong database hay không?
+
+*/

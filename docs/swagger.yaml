@@ -335,4 +335,65 @@ paths:
           description: Error message
           schema:
             type: body
+  /wishlist/:id:
+    delete:
+      description: Remove item from wishlist, return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item id to be removed from wishlist
+        in: path
+        name: itemid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+    post:
+      description: Add new item to wishlist, return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item id to be added to wishlist
+        in: path
+        name: itemid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
 swagger: "2.0"
