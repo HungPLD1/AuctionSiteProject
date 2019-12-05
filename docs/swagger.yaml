@@ -192,6 +192,44 @@ paths:
           description: Error message
           schema:
             type: body
+  /password:
+    put:
+      description: Add new item to wishlist, return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Old Password
+        in: body
+        name: oldpassword
+        required: true
+        schema:
+          type: string
+      - description: New Password
+        in: body
+        name: newpassword
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
   /profile:
     get:
       description: Show user profile, return user general profile in JSON form
@@ -302,6 +340,37 @@ paths:
           schema:
             type: body
         "400":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /upload:
+    post:
+      description: Upload one or multiples photos of item , return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item id to be removed from wishlist
+        in: path
+        name: itemid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
           description: Error message
           schema:
             type: body

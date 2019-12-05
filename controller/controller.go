@@ -4,6 +4,7 @@ import (
 	"hellogorm/model"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -47,7 +48,7 @@ func GetItemByID(c *gin.Context) {
 	itemid := c.Param("id")
 
 	var itemsList []model.Items
-	var imagelink []model.ItemImage
+	var images []model.ItemImage
 
 	errGetItems := db.Table("item").
 		Where("item_id = ?", itemid).
@@ -56,6 +57,7 @@ func GetItemByID(c *gin.Context) {
 	if errGetItems != nil {
 		log.Println(errGetItems)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetItems,
 			"message": "Error while fetching item data",
 		})
 		return
@@ -64,9 +66,9 @@ func GetItemByID(c *gin.Context) {
 		db.Table("item_image").
 			Where("item_id = ?", item.ItemID).
 			Select("*").
-			Scan(&imagelink)
-		for _, link := range imagelink {
-			itemsList[i].ImageLink = append([]string(itemsList[i].ImageLink), link.ImageLink)
+			Scan(&images)
+		for _, link := range images {
+			itemsList[i].Images = append([]string(itemsList[i].Images), link.Images)
 		}
 	}
 	c.JSON(200, itemsList)
@@ -84,7 +86,7 @@ func GetItemByQuery(c *gin.Context) {
 	itemcategories := c.DefaultQuery("categories", "all")
 
 	var itemsList []model.Items
-	var imagelink []model.ItemImage
+	var images []model.ItemImage
 
 	errGetItems := db.Table("item").
 		Where("(item_name LIKE ? OR '%all%' = ?) AND (categories_id = ? OR 'all' = ?)", itemname, itemname, itemcategories, itemcategories).
@@ -94,6 +96,7 @@ func GetItemByQuery(c *gin.Context) {
 	if errGetItems != nil {
 		log.Println(errGetItems)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetItems,
 			"message": "Error while fetching item data",
 		})
 		return
@@ -102,9 +105,9 @@ func GetItemByQuery(c *gin.Context) {
 		db.Table("item_image").
 			Where("item_id = ?", item.ItemID).
 			Select("*").
-			Scan(&imagelink)
-		for _, link := range imagelink {
-			itemsList[i].ImageLink = append([]string(itemsList[i].ImageLink), link.ImageLink)
+			Scan(&images)
+		for _, link := range images {
+			itemsList[i].Images = append([]string(itemsList[i].Images), link.Images)
 		}
 	}
 	c.JSON(200, itemsList)
@@ -129,6 +132,7 @@ func SearchCategories(c *gin.Context) {
 	if errGetCategories != nil {
 		log.Println(errGetCategories)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetCategories,
 			"message": "Error while fetching categories data",
 		})
 		return
@@ -152,6 +156,7 @@ func RegisterJSON(c *gin.Context) {
 	err := c.BindJSON(&newUser)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err,
 			"message": "Not a valid JSON!",
 		})
 		return
@@ -175,6 +180,7 @@ func RegisterJSON(c *gin.Context) {
 	if exist, err := checkUserByID(newUser.UserID); err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
 			"message": "Error while fetching user data",
 		})
 		return
@@ -189,6 +195,7 @@ func RegisterJSON(c *gin.Context) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(newUser.UserPassword), bcrypt.MinCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
 			"message": "Encrypt passsword error",
 		})
 		return
@@ -201,18 +208,18 @@ func RegisterJSON(c *gin.Context) {
 		UserName:  "",
 		UserPhone: "",
 		//UserBirth:    	  time.Time{},
-		UserGender:       0,
-		UserAddress:      "",
-		UserPassword:     passwordHash,
-		UserAccessLevel:  1,
-		UserSessionToken: "",
+		UserGender:      0,
+		UserAddress:     "",
+		UserPassword:    passwordHash,
+		UserAccessLevel: 1,
 	}
-	newUser.UserSessionToken, _ = tokenGenerate(newUser)
+	UserSessionToken, _ := tokenGenerate(newUser)
 
 	//Save account info to database
 	errInsertDb := db.Table("user_common").Create(newUser).Error
 	if errInsertDb != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errInsertDb,
 			"message": "Error: Cannot save new user",
 		})
 		return
@@ -224,6 +231,7 @@ func RegisterJSON(c *gin.Context) {
 		Code:         0,
 		Message:      "Đăng kí thành công",
 		Data:         newUser,
+		SessionToken: UserSessionToken,
 	}
 
 	c.JSON(http.StatusOK, rsp)
@@ -238,12 +246,13 @@ func RegisterJSON(c *gin.Context) {
 //	@Failure 500 {body} string "Error message"
 //  @Router /login [POST]
 func LoginJSON(c *gin.Context) {
-	db := GetDBInstance().Db
+	//db := GetDBInstance().Db
 	var userLogin model.UserCommon
 
 	err := c.BindJSON(&userLogin)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err,
 			"message": "Not a valid JSON!",
 		})
 		return
@@ -252,6 +261,7 @@ func LoginJSON(c *gin.Context) {
 	if exist, err := validLoginInfo(userLogin); err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
 			"message": "Error while fetching user data",
 		})
 		return
@@ -262,29 +272,18 @@ func LoginJSON(c *gin.Context) {
 		return
 	}
 	//Generate token
-	if userLogin.UserSessionToken, err = tokenGenerate(userLogin); err != nil {
+	var token string
+	if token, err = tokenGenerate(userLogin); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
 			"message": "Error,cannot create login session!",
-		})
-		return
-	}
-
-	//Add Token to database
-	errAddToken := db.Table("user_common").
-		Where("user_id = ?", userLogin.UserID).
-		Update("user_session_token", userLogin.UserSessionToken).
-		Error
-	if errAddToken != nil {
-		log.Println(errAddToken)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error while saving session token",
 		})
 		return
 	}
 
 	//return Session token
 	c.JSON(200, gin.H{
-		"sessiontoken": userLogin.UserSessionToken,
+		"sessiontoken": token,
 	})
 	return
 }
@@ -307,6 +306,7 @@ func UserProfile(c *gin.Context) {
 	var errtoken error
 	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
 			"message": "Bad request",
 		})
 		return
@@ -321,11 +321,12 @@ func UserProfile(c *gin.Context) {
 	var userprofile model.UserCommon
 	errprofile := db.Table("user_common").
 		Where("user_id = ?", userID).
-		Select("user_name, user_phone,user_birth,user_gender,user_address").
+		Select("user_id, user_name, user_phone,user_birth,user_gender,user_address").
 		Scan(&userprofile).Error
 	if errprofile != nil {
 		log.Println(errprofile)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errprofile,
 			"message": "Error while fetching user data",
 		})
 		return
@@ -352,6 +353,7 @@ func UserProfileUpdate(c *gin.Context) {
 	var errtoken error
 	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
 			"message": "Bad request",
 		})
 		return
@@ -367,6 +369,7 @@ func UserProfileUpdate(c *gin.Context) {
 	errJSON := c.BindJSON(&userUpdate)
 	if errJSON != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errJSON,
 			"message": "Not a valid JSON!",
 		})
 		return
@@ -374,13 +377,14 @@ func UserProfileUpdate(c *gin.Context) {
 	//Register update
 	errUpdate := db.Table("user_common").
 		Model(&userUpdate).
-		Omit("user_id", "user_password", "user_access_level", "user_session_token").
+		Omit("user_id", "user_password", "user_access_level", "user_createAt", "user_avatar").
 		Where("user_id = ?", userID).
 		Updates(userUpdate).
 		Error
 	if errUpdate != nil {
 		log.Println(errUpdate)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errUpdate,
 			"message": "Error while updating user data",
 		})
 		return
@@ -408,6 +412,7 @@ func ShowWishList(c *gin.Context) {
 	var errtoken error
 	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
 			"message": "Bad request",
 		})
 		return
@@ -420,7 +425,7 @@ func ShowWishList(c *gin.Context) {
 
 	db := GetDBInstance().Db
 	var wishlist []model.Items
-	var imagelink []model.ItemImage
+	var images []model.ItemImage
 	db.Table("item").
 		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
 		Where("user_wishlist.user_id = ?", userID).
@@ -431,12 +436,101 @@ func ShowWishList(c *gin.Context) {
 		db.Table("item_image").
 			Where("item_id = ?", item.ItemID).
 			Select("*").
-			Scan(&imagelink)
-		for _, link := range imagelink {
-			wishlist[i].ImageLink = append([]string(wishlist[i].ImageLink), link.ImageLink)
+			Scan(&images)
+		for _, link := range images {
+			wishlist[i].Images = append([]string(wishlist[i].Images), link.Images)
 		}
 	}
 	c.JSON(200, wishlist)
+	return
+}
+
+// @Description Add new item to wishlist, return a JSON message
+// @Param Authorization header string true "Session token"
+// @Param oldpassword body string true "Old Password"
+// @Param newpassword body string true "New Password"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /password [PUT]
+func UpdatePassword(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userid string
+	var errtoken error
+	if userid, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userid == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	//Get user update info
+	var passwordinfo model.ModifyPassword
+	errJSON := c.BindJSON(&passwordinfo)
+	if errJSON != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errJSON,
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+	//check the old password
+	if passCheck, err := checkUserPassword(userid, passwordinfo.OldPassword); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
+			"message": "Error while checking password!",
+		})
+		return
+	} else if passCheck == false {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+
+	//Encrypt the new password
+	hash, errcrypt := bcrypt.GenerateFromPassword([]byte(passwordinfo.NewPassword), bcrypt.MinCost)
+	if errcrypt != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errcrypt,
+			"message": "Encrypt passsword error",
+		})
+		return
+	}
+	passwordHash := string(hash)
+
+	//Update the new password
+	db := GetDBInstance().Db
+	passwordUpdate := model.UserCommon{
+		UserPassword: passwordHash,
+	}
+	errUpdate := db.Table("user_common").
+		Model(&passwordUpdate).
+		Select("user_password").
+		Where("user_id = ?", userid).
+		Updates(passwordUpdate).
+		Error
+	if errUpdate != nil {
+		log.Println(errUpdate)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Error":   errUpdate,
+			"message": "Error while updating user data",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "Update Success!",
+	})
 	return
 }
 
@@ -458,6 +552,7 @@ func AddItemToWishList(c *gin.Context) {
 	var errtoken error
 	if userid, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
 			"message": "Bad request",
 		})
 		return
@@ -490,6 +585,7 @@ func AddItemToWishList(c *gin.Context) {
 	if errCreate != nil {
 		log.Println(errCreate)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errCreate,
 			"message": "Server Error: Cannot add item to wishlist!",
 		})
 		return
@@ -518,6 +614,7 @@ func RemoveItemFromWishList(c *gin.Context) {
 	var errtoken error
 	if userid, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
 			"message": "Bad request",
 		})
 		return
@@ -538,6 +635,7 @@ func RemoveItemFromWishList(c *gin.Context) {
 	if errDelete != nil {
 		log.Println(errDelete)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errDelete,
 			"message": "Server Error: Cannot remove item from wishlist!",
 		})
 		return
@@ -566,6 +664,7 @@ func BidSession(c *gin.Context) {
 	if errGetSession != nil {
 		log.Println(errGetSession)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetSession,
 			"message": "Error while fetching session data",
 		})
 		return
@@ -592,6 +691,7 @@ func BidLogs(c *gin.Context) {
 	if errgetLogs != nil {
 		log.Println(errgetLogs)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errgetLogs,
 			"message": "Error while fetching bidding data",
 		})
 		return
@@ -618,6 +718,7 @@ func ShowReview(c *gin.Context) {
 	if errgetReview != nil {
 		log.Println(errgetReview)
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errgetReview,
 			"message": "Error while fetching review data",
 		})
 		return
@@ -626,23 +727,90 @@ func ShowReview(c *gin.Context) {
 	return
 }
 
+//  @Description Upload one or multiples photos of item , return a JSON message
+// @Param Authorization header string true "Session token"
+// @Param itemid path string true "Item id to be removed from wishlist"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /upload [POST]
+func UploadItemImages(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	//check token validation and get userID
+	var userid string
+	var errtoken error
+	if userid, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userid == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+
+	//Get files data from Multiform
+	var uploadform model.UploadItemImageForm
+	if err := c.ShouldBind(&uploadform); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err,
+			"message": "Not a valid form!",
+		})
+		return
+	}
+	//Copy files to server
+	db := GetDBInstance().Db
+	for _, file := range uploadform.Images {
+		filename := path.Join(".", "view", "images", file.Filename)
+		log.Println(filename)
+		if err := c.SaveUploadedFile(file, filename); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   err,
+				"message": "Error while saving photos!",
+			})
+			return
+		}
+		//Update filename to database
+		images := model.ItemImage{
+			ItemID: uploadform.ItemID,
+			Images: filename,
+		}
+		errCreate := db.Table("item_image").Create(&images).Error
+		if errCreate != nil {
+			log.Println(errCreate)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   errCreate,
+				"message": "Error while updating database!",
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Success": "Upload Files Successfully!",
+	})
+	return
+}
+
 //AddWishList ...API: Search for session id
 
 /**********************************************************************/
 /**************************INTERNAL FUNCTIONS**************************/
 //check if the username exist in database or not
-func checkUserByID(UserID string) (bool, error) {
+func checkUserByID(userID string) (bool, error) {
 	db := GetDBInstance().Db
-	var usersList model.UserCommon
-	err := db.Table("user_common").
-		Where("user_id = ?", UserID).
-		Select("user_id").
-		Scan(&usersList).
-		Error
-	if err != nil {
-		return false, err
-	}
-	if usersList.UserID != UserID {
+	//var usersList model.UserCommon
+	if NotExist := db.Table("user_common").
+		Where("user_id = ?", userID).
+		First(&model.UserCommon{}).
+		RecordNotFound(); NotExist == true {
 		return false, nil
 	}
 	return true, nil
@@ -753,8 +921,11 @@ func checkSessionToken(token string) (string, error) {
 GENERAL:
 Tách controller.go ra làm nhiều files nhỏ để dễ tìm kiếm Chẳng hản như get.go, post.go, put.go, delete.go
 Phải tạo model error message thay vì sử dụng gin.H{} . Về sau có thể tích hợp vào swagger
+nghiên cứu cách update session tự động
+Sua lai Status errors
 
 API:
 API delete wishlist kiểm tra item id có tồn tại trong database hay không?
+Làm upload API
 
 */
