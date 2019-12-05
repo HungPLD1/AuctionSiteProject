@@ -4,10 +4,6 @@ import (
 	"hellogorm/controller"
 	model "hellogorm/model"
 
-	//"log"
-
-	//"time"
-	//jwt_lib "github.com/dgrijalva/jwt-go"
 	_ "hellogorm/docs"
 
 	"github.com/gin-gonic/contrib/jwt"
