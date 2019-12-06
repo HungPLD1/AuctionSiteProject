@@ -45,7 +45,7 @@ Cấu trúc các bảng trong database của project
 <img align="right" src="https://imgur.com/JXMaoYC.png">
 
 ## Kiến trúc
-Repositories này bao gồm :
+Repositories này chứa phần BackEnd của project bao gồm các Rest API, swagger documentation:
 main.go:
 - API declaration
 - Database initialization
@@ -79,7 +79,6 @@ docs/
 
 
 ## Cài đặt
-Repositories này chứa phần BackEnd của project bao gồm các Rest API, swagger documentation:
 1. Kéo thư mục về máy
 ```sh
 $ git clone https://github.com/Velverto/AuctionSiteProject
