@@ -49,7 +49,8 @@ Repositories này bao gồm :
 main.go:
 - API declaration
 - Database initialization
-- Set listening port (default 8080)
+- Set listening port (default 8080) 
+
 config.local.json: Thông tin của server mysql (address hiện đang bị lỗi)
 ```json
 {
