@@ -80,4 +80,4 @@ $ go run main.go
 ```
 
 ## API Documentation
-Swagger link: http://site.ap.loclx.io/swagger/index.html
+Swagger link: http://site.loclx.io/swagger/index.html
