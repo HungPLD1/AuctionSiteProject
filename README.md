@@ -44,6 +44,34 @@ Cấu trúc các bảng trong database của project
 
 <img align="right" src="https://imgur.com/JXMaoYC.png">
 
+## Kiến trúc
+Repositories này bao gồm :
+main.go:
+- API declaration
+- Database initialization
+- Set listening port (default 8080)
+config.local.json: Thông tin của server mysql (address hiện đang bị lỗi)
+```json
+{
+    "database": {
+       "user": "root",
+       "password": "123",
+       "database": "hieu_bidding_project",
+       "address": "45.118.145.149:8080"
+    }    
+}
+```
+testdata.sql: Các query tạo bảng và dữ liệu thử nghiệm để import vào phpmyadmin
+controller/
+- API definition, mỗi file tương ứng với một chức năng chính của webiste
+- internalfunction.go : Function sử dụng nội bộ trong package controller
+model/
+- Chứa các struct model cần thiết cho gorm và gửi JSON về FrontEnd
+view/images/
+- Chứa ảnh upload lên server
+docs/
+- File tạo bởi swagger
+
 
 ## Cài đặt
 Repositories này chứa phần BackEnd của project bao gồm các Rest API, swagger documentation:
