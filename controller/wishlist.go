@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,6 +41,7 @@ func ShowWishList(c *gin.Context) {
 	db := GetDBInstance().Db
 	var wishlist []model.Items
 	var images []model.ItemImage
+
 	db.Table("item").
 		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
 		Where("user_wishlist.user_id = ?", userID).
@@ -103,8 +105,9 @@ func AddItemToWishList(c *gin.Context) {
 	//Attach item ID to wishlist
 	itemid, _ := strconv.Atoi(id)
 	wishlist := model.UserWishlist{
-		UserID: userid,
-		ItemID: itemid,
+		UserID:  userid,
+		ItemID:  itemid,
+		AddDate: time.Now(),
 	}
 	errCreate := db.Table("user_wishlist").Create(&wishlist).Error
 	if errCreate != nil {

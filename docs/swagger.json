@@ -33,69 +33,6 @@
                 }
             }
         },
-        "/item": {
-            "get": {
-                "description": "Search item by query, return a JSON form",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Name of the item (or part of it)",
-                        "name": "name",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Item Categories by number",
-                        "name": "categories",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Items"
-                        }
-                    },
-                    "500": {
-                        "description": "Error message",
-                        "schema": {
-                            "type": "body"
-                        }
-                    }
-                }
-            }
-        },
-        "/item/:id": {
-            "get": {
-                "description": "Get the item's informations and pictures by ID, return a JSON form",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "the item ID number",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Items"
-                        }
-                    },
-                    "500": {
-                        "description": "Error message",
-                        "schema": {
-                            "type": "body"
-                        }
-                    }
-                }
-            }
-        },
         "/login": {
             "post": {
                 "description": "Login by JSON form, return a jwt session token in JSON form",
@@ -333,6 +270,41 @@
                 }
             }
         },
+        "/session": {
+            "get": {
+                "description": "Search Session by query, return a JSON form",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Name of the item (or part of it)",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Item Categories by number",
+                        "name": "categories",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SessionSearch"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
         "/session/:id": {
             "get": {
                 "description": "Show Session information by ID, return a JSON form",
@@ -349,7 +321,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.BidSession"
+                            "$ref": "#/definitions/model.SessionSearch"
                         }
                     },
                     "500": {
@@ -587,36 +559,13 @@
         }
     },
     "definitions": {
-        "model.BidSession": {
-            "type": "object",
-            "properties": {
-                "enddate": {
-                    "type": "string"
-                },
-                "itemid": {
-                    "type": "integer"
-                },
-                "sellerid": {
-                    "type": "string"
-                },
-                "sessionid": {
-                    "type": "integer"
-                },
-                "sessionstatus": {
-                    "type": "string"
-                },
-                "startdate": {
-                    "type": "string"
-                }
-            }
-        },
         "model.BidSessionLog": {
             "type": "object",
             "properties": {
                 "amount": {
                     "type": "number"
                 },
-                "biddate": {
+                "createAt": {
                     "type": "string"
                 },
                 "sessionid": {
@@ -644,26 +593,82 @@
                 "categoriesid": {
                     "type": "integer"
                 },
+                "createAt": {
+                    "type": "string"
+                },
                 "imagelink": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "itemDescription": {
-                    "type": "string"
-                },
                 "itemName": {
-                    "type": "string"
-                },
-                "itemSaleStatus": {
                     "type": "string"
                 },
                 "itemcondition": {
                     "type": "string"
                 },
+                "itemdescription": {
+                    "type": "string"
+                },
                 "itemid": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SessionSearch": {
+            "type": "object",
+            "properties": {
+                "biddingLog": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.BidSessionLog"
+                    }
+                },
+                "categoriesName": {
+                    "type": "string"
+                },
+                "categoriesid": {
+                    "type": "integer"
+                },
+                "currentbid": {
+                    "type": "integer"
+                },
+                "enddate": {
+                    "type": "string"
+                },
+                "imagelink": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "itemName": {
+                    "type": "string"
+                },
+                "itemdescription": {
+                    "type": "string"
+                },
+                "itemid": {
+                    "type": "integer"
+                },
+                "minimumIncreaseBid": {
+                    "type": "integer"
+                },
+                "sellerid": {
+                    "type": "string"
+                },
+                "sellername": {
+                    "type": "string"
+                },
+                "sessionid": {
+                    "type": "integer"
+                },
+                "startdate": {
+                    "type": "string"
                 }
             }
         },
@@ -676,8 +681,16 @@
                 "address": {
                     "type": "string"
                 },
+                "avatarimage": {
+                    "type": "string"
+                },
+                "createAt": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
                 "gender": {
-                    "description": "UserBirth \t\t\ttime.Time `gorm:\"type:date\" json:\"birthdate\"`",
                     "type": "integer"
                 },
                 "name": {
@@ -687,9 +700,6 @@
                     "type": "string"
                 },
                 "phone": {
-                    "type": "string"
-                },
-                "token": {
                     "type": "string"
                 },
                 "userid": {
@@ -704,6 +714,9 @@
                     "type": "string"
                 },
                 "score": {
+                    "type": "integer"
+                },
+                "sessionid": {
                     "type": "integer"
                 },
                 "targetid": {

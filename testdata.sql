@@ -71,6 +71,7 @@ CREATE TABLE bid_session (
     userview_count INT DEFAULT 0,
     winner_id VARCHAR(255),
     minimum_increase_bid INT DEFAULT 0,
+    current_bid BIGINT DEFAULT 0,
 
     FOREIGN KEY (item_id) REFERENCES item(item_id),
     FOREIGN KEY (seller_id) REFERENCES user_common(user_id),
@@ -152,10 +153,10 @@ INSERT INTO user_common VALUES("tester67",'6666','Death Click CLone','6666666666
 INSERT INTO user_common VALUES("tester68",'6666','Death Click CLone','6666666666','death@click.hell','M','hell',null,2,null);
 
 
-INSERT INTO bid_session VALUES(null,1,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null);
-INSERT INTO bid_session VALUES(null,2,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null);
-INSERT INTO bid_session VALUES(null,3,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null);
-INSERT INTO bid_session VALUES(null,4,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null);
+INSERT INTO bid_session VALUES(null,1,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null,null);
+INSERT INTO bid_session VALUES(null,2,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null,null);
+INSERT INTO bid_session VALUES(null,3,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null,null);
+INSERT INTO bid_session VALUES(null,4,"tester66",'2019-11-22 18:00:04','2020-11-22 18:00:04',null,null,null,null);
 
 
 INSERT INTO bid_session_log VALUES("tester67",1,330000,'2019-11-22 18:12:22');

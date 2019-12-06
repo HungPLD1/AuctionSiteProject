@@ -42,7 +42,7 @@ func UserProfile(c *gin.Context) {
 	var userprofile model.UserCommon
 	errprofile := db.Table("user_common").
 		Where("user_id = ?", userID).
-		Select("user_id, user_name, user_phone,user_birth,user_gender,user_address").
+		Select("user_id, user_name, user_email, user_phone,user_gender,user_address").
 		Scan(&userprofile).Error
 	if errprofile != nil {
 		log.Println(errprofile)

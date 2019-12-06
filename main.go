@@ -33,20 +33,18 @@ func main() {
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	//swagger init
-	url := ginSwagger.URL("http://site.ap.loclx.io/swagger/doc.json") // The url pointing to API definition
+	url := ginSwagger.URL("http://site.loclx.io/swagger/doc.json") // The url pointing to API definition
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	router.GET("/", func(c *gin.Context) {
 		c.String(200, "Welcome to hellogorm")
 	})
 
-	v2 := router.Group("item")
-	v2.GET("/:id", controller.GetItemByID)                 //API: Search item by id
-	v2.GET("/", controller.GetItemByQuery)                 //API: Search item by query (name, categories)
 	router.GET("/categories", controller.SearchCategories) //API: Search categories by id, return all by default
 
-	router.GET("/session/:id", controller.BidSession) //API: Get Bid Session
-	router.GET("/logs/:id", controller.BidLogs)       //APT: Get Bid Session Logs
+	router.GET("/session/:id", controller.BidSessionByID) //API: Get Bid Session
+	router.GET("/session", controller.BidSessionByQuery)  //API: Get Bid Session
+	router.GET("/logs/:id", controller.BidLogs)           //APT: Get Bid Session Logs
 
 	router.POST("/signup", controller.RegisterJSON)                                 //API: Register new Account by JSON
 	router.POST("/login", controller.LoginJSON)                                     //API: Login by JSON

@@ -1,24 +1,9 @@
 definitions:
-  model.BidSession:
-    properties:
-      enddate:
-        type: string
-      itemid:
-        type: integer
-      sellerid:
-        type: string
-      sessionid:
-        type: integer
-      sessionstatus:
-        type: string
-      startdate:
-        type: string
-    type: object
   model.BidSessionLog:
     properties:
       amount:
         type: number
-      biddate:
+      createAt:
         type: string
       sessionid:
         type: integer
@@ -36,20 +21,57 @@ definitions:
     properties:
       categoriesid:
         type: integer
+      createAt:
+        type: string
       imagelink:
         items:
           type: string
         type: array
-      itemDescription:
-        type: string
       itemName:
-        type: string
-      itemSaleStatus:
         type: string
       itemcondition:
         type: string
+      itemdescription:
+        type: string
       itemid:
         type: integer
+      name:
+        type: string
+    type: object
+  model.SessionSearch:
+    properties:
+      biddingLog:
+        items:
+          $ref: '#/definitions/model.BidSessionLog'
+        type: array
+      categoriesName:
+        type: string
+      categoriesid:
+        type: integer
+      currentbid:
+        type: integer
+      enddate:
+        type: string
+      imagelink:
+        items:
+          type: string
+        type: array
+      itemName:
+        type: string
+      itemdescription:
+        type: string
+      itemid:
+        type: integer
+      minimumIncreaseBid:
+        type: integer
+      sellerid:
+        type: string
+      sellername:
+        type: string
+      sessionid:
+        type: integer
+      startdate:
+        type: string
     type: object
   model.UserCommon:
     properties:
@@ -57,16 +79,19 @@ definitions:
         type: integer
       address:
         type: string
+      avatarimage:
+        type: string
+      createAt:
+        type: string
+      email:
+        type: string
       gender:
-        description: "UserBirth \t\t\ttime.Time `gorm:\"type:date\" json:\"birthdate\"`"
         type: integer
       name:
         type: string
       password:
         type: string
       phone:
-        type: string
-      token:
         type: string
       userid:
         type: string
@@ -76,6 +101,8 @@ definitions:
       content:
         type: string
       score:
+        type: integer
+      sessionid:
         type: integer
       targetid:
         type: string
@@ -100,47 +127,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Categories'
-        "500":
-          description: Error message
-          schema:
-            type: body
-  /item:
-    get:
-      description: Search item by query, return a JSON form
-      parameters:
-      - description: Name of the item (or part of it)
-        in: query
-        name: name
-        required: true
-        type: string
-      - description: Item Categories by number
-        in: query
-        name: categories
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Items'
-        "500":
-          description: Error message
-          schema:
-            type: body
-  /item/:id:
-    get:
-      description: Get the item's informations and pictures by ID, return a JSON form
-      parameters:
-      - description: the item ID number
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Items'
         "500":
           description: Error message
           schema:
@@ -299,6 +285,29 @@ paths:
           description: Error message
           schema:
             type: body
+  /session:
+    get:
+      description: Search Session by query, return a JSON form
+      parameters:
+      - description: Name of the item (or part of it)
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Item Categories by number
+        in: query
+        name: categories
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SessionSearch'
+        "500":
+          description: Error message
+          schema:
+            type: body
   /session/:id:
     get:
       description: Show Session information by ID, return a JSON form
@@ -312,7 +321,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.BidSession'
+            $ref: '#/definitions/model.SessionSearch'
         "500":
           description: Error message
           schema:

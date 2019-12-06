@@ -15,15 +15,34 @@ import (
 
 /**************************DATABASE STRUCT FOR GORM*********************************/
 
+//SessionSearch ...Used by gorm and json
+type SessionSearch struct {
+	SessionID          int             `gorm:"type:bigint(20)" json:"sessionid"`
+	ItemID             int             `gorm:"type:bigint(20)" json:"itemid"`
+	ItemName           string          `gorm:"type:varchar(255) json:"itemname"`
+	CategoriesID       int             `gorm:"type:int(11)" json:"categoriesid"`
+	CategoriesName     string          `gorm:"type:varchar(255) json:"categoriesname"`
+	ItemDescription    string          `gorm:"type:text" json:"itemdescription"`
+	SessionStartDate   time.Time       `gorm:"type:datetime" json:"startdate"`
+	SessionEndDate     time.Time       `gorm:"type:datetime" json:"enddate"`
+	MinimumIncreaseBid int             `gorm: "type:int(11)" json:"minimumbid"`
+	Images             []string        `json:"imagelink"`
+	SellerID           string          `gorm:"type:varchar(255)" json:"sellerid"`
+	SellerName         string          `gorm:"type:varchar(100)" json:"sellername"`
+	CurrentBid         int             `gorm:"type:bigint(20)" json:"currentbid"`
+	BidLogs            []BidSessionLog `json:"biddingLog"`
+}
+
 //Items ...Used by gorm and json
 type Items struct {
-	ItemID          int      `gorm:"type:bigint(20)" json:"itemid"`
-	CategoriesID    int      `gorm:"type:int(11)" json:"categoriesid"`
-	ItemName        string   `gorm:"type:varchar(255) json:"itemname"`
-	ItemDescription string   `gorm:"type:text" json:"itemdescription"`
-	ItemCondition   string   `gorm:"type:varchar(30)" json:"itemcondition"`
-	ItemCreateAt	time.Time`gorm:"type:datetime" json:"createAt"`
-	Images       []string 	 `json:"imagelink"`
+	ItemID          int       `gorm:"type:bigint(20)" json:"itemid"`
+	CategoriesID    int       `gorm:"type:int(11)" json:"categoriesid"`
+	ItemName        string    `gorm:"type:varchar(255) json:"itemname"`
+	ItemDescription string    `gorm:"type:text" json:"itemdescription"`
+	ItemCondition   string    `gorm:"type:varchar(30)" json:"itemcondition"`
+	ItemCreateAt    time.Time `gorm:"type:datetime" json:"createAt"`
+	Images          []string  `json:"imagelink"`
+	UserName        string    `gorm:"type:varchar(100)" json:"name"`
 }
 
 //Categories ...Used by gorm and json
@@ -34,34 +53,35 @@ type Categories struct {
 
 //ItemImage ...Used by gorm and json
 type ItemImage struct {
-	ItemID    int    `gorm:"type:bigint(20)" json:"itemid"`
-	Images string 	 `gorm:"text" json:"images"`
+	ItemID int    `gorm:"type:bigint(20)" json:"itemid"`
+	Images string `gorm:"text" json:"images"`
 }
 
 //UserCommon ...Used by gorm and json
 type UserCommon struct {
-	UserID    string `gorm:"type:varchar(255)" json:"userid"`
-	UserPassword     string `gorm:"type:varchar(255)" json:"password"`
-	UserName  string `gorm:"type:varchar(100)" json:"name"`
-	UserPhone string `gorm:"type:varchar(15)" json:"phone"`
-	UserEmail string `gorm:"type:varchar(255)" json:"email"`
-	UserGender       byte   `gorm:"type:char(1)" json:"gender"`
-	UserAddress      string `gorm:"type:varchar(255)" json:"address"`
-	UserAvatar		 string	`gorm:"type:TEXT" json:"avatarimage"`
-	UserAccessLevel  int    `gorm:"type:int" json:"accesslevel"`
-	UserCreateAt time.Time  `gorm:"type:datetime" json:"createAt"`
+	UserID          string    `gorm:"type:varchar(255)" json:"userid"`
+	UserPassword    string    `gorm:"type:varchar(255)" json:"password"`
+	UserName        string    `gorm:"type:varchar(100)" json:"name"`
+	UserPhone       string    `gorm:"type:varchar(15)" json:"phone"`
+	UserEmail       string    `gorm:"type:varchar(255)" json:"email"`
+	UserGender      byte      `gorm:"type:char(1)" json:"gender"`
+	UserAddress     string    `gorm:"type:varchar(255)" json:"address"`
+	UserAvatar      string    `gorm:"type:TEXT" json:"avatarimage"`
+	UserAccessLevel int       `gorm:"type:int" json:"accesslevel"`
+	UserCreateat    time.Time `gorm:"type:datetime" json:"createAt"`
 }
 
 //BidSession ...Used by gorm and json
 type BidSession struct {
-	SessionID        int       `gorm:"type:bigint(20)" json:"sessionid"`
-	ItemID           int       `gorm:"type:bigint(20)" json:"itemid"`
-	SellerID         string    `gorm:"type:varchar(255)" json:"sellerid"`
-	SessionStartDate time.Time `gorm:"type:datetime" json:"startdate"`
-	SessionEndDate   time.Time `gorm:"type:datetime" json:"enddate"`
-	UserviewCount	 int		`gorm: "type:int(11)" json:"viewcount"`
-	WinnerID		 string 	`gorm:"type:varchar(255)" json:"winnerid"`
-	MinimumIncreaseBid	int		`gorm: "type:int(11)" json:"minimumbid"`
+	SessionID          int       `gorm:"type:bigint(20)" json:"sessionid"`
+	ItemID             int       `gorm:"type:bigint(20)" json:"itemid"`
+	SellerID           string    `gorm:"type:varchar(255)" json:"sellerid"`
+	SessionStartDate   time.Time `gorm:"type:datetime" json:"startdate"`
+	SessionEndDate     time.Time `gorm:"type:datetime" json:"enddate"`
+	UserviewCount      int       `gorm: "type:int(11)" json:"viewcount"`
+	WinnerID           string    `gorm:"type:varchar(255)" json:"winnerid"`
+	MinimumIncreaseBid int       `gorm: "type:int(11)" json:"minimumbid"`
+	CurrentBid         int       `gorm:"type:bigint(20)" json:"currentbid"`
 }
 
 //BidSessionLog ...Used by gorm and json
@@ -76,16 +96,16 @@ type BidSessionLog struct {
 type UserReview struct {
 	UserWriter    string `gorm:"type:varchar(255)" json:"writerid"`
 	UserTarget    string `gorm:"type:varchar(255)" json:"targetid"`
-	SessionID	  int	 `gorm:"type:bigint(20)" json:"sessionid"`
+	SessionID     int    `gorm:"type:bigint(20)" json:"sessionid"`
 	ReviewContent string `gorm:"type:text" json:"content"`
 	ReviewScore   int    `gorm:"type:int(1)" json:"score"`
 }
 
 //UserWishlist ...used by gorm and json
 type UserWishlist struct {
-	UserID string `gorm:"type:varchar(255)" json:"userid"`
-	ItemID int    `gorm:"type:bigint(20)" json:"itemid"`
-	AddDate	time.Time	`gorm:"type: datetime" json:"createAt"`
+	UserID  string    `gorm:"type:varchar(255)" json:"userid"`
+	ItemID  int       `gorm:"type:bigint(20)" json:"itemid"`
+	AddDate time.Time `gorm:"type: datetime" json:"createAt"`
 }
 
 /**************************COMMUNICATION STRUCT*********************************/
@@ -95,7 +115,7 @@ type SignupLoginResponse struct {
 	Code         int        `json:"code"`
 	Message      string     `json:"message"`
 	Data         UserCommon `json:"data"`
-	SessionToken string		`json:"sessiontoken`
+	SessionToken string     `json:"sessiontoken`
 }
 
 //AuthorizationHeader ...Used to get session token in header

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	jwt_lib "github.com/dgrijalva/jwt-go"
+	"github.com/jinzhu/gorm"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -122,6 +123,39 @@ func checkSessionToken(token string) (string, error) {
 
 	log.Println("Success: Token are valid")
 	return userID, nil
+}
+
+/** SQL query for session searching*/
+func searchSessionSQL() *gorm.DB {
+	db := GetDBInstance().Db
+	return db.Table("bid_session").
+		Joins("JOIN item ON item.item_id = bid_session.item_id").
+		Joins("JOIN user_common ON user_common.user_id = bid_session.seller_id").
+		Joins("JOIN categories ON categories.categories_id = item.categories_id").
+		Select("bid_session.session_id, bid_session.item_id, bid_session.session_start_date, bid_session.session_end_date, bid_session.minimum_increase_bid, bid_session.seller_id, bid_session.current_bid, item.item_name, item.item_description, user_common.user_name AS seller_name, categories.categories_name")
+}
+
+/** Attach the bidding log data to session model */
+func attachSessionLogs(session model.SessionSearch) []model.BidSessionLog {
+	db := GetDBInstance().Db
+	var result []model.BidSessionLog
+	db.Table("bid_session_log").
+		Where("session_id = ?", session.SessionID).
+		Select("user_id, bid_amount, bid_date").
+		Scan(&result)
+	return result
+}
+
+/** Attach the images data to session model */
+func attachSessionImages(session *model.SessionSearch) model.SessionSearch {
+	db := GetDBInstance().Db
+	var images []string
+	db.Table("item_image").
+		Where("item_id = ?", session.ItemID).
+		Select("*").
+		Pluck("images", &images)
+	session.Images = append([]string(session.Images), images...)
+	return *session
 }
 
 /****************************NOT YET INCLUDED*************************/

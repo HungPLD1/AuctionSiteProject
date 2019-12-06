@@ -76,11 +76,11 @@ func RegisterJSON(c *gin.Context) {
 		UserID:    newUser.UserID,
 		UserName:  "",
 		UserPhone: "",
-		//UserBirth:    	  time.Time{},
-		UserGender:      0,
+		UserGender:    0,
 		UserAddress:     "",
 		UserPassword:    passwordHash,
 		UserAccessLevel: 1,
+		UserCreateat: time.Now(),
 	}
 	UserSessionToken, _ := tokenGenerate(newUser)
 
