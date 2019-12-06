@@ -8,6 +8,7 @@ Project mô phỏng website bán đấu giá của TechMaster
 - [Cấu trúc Database](#Cấu-trúc-Database)
 - [Kiến trúc](#Kiến-trúc)
 - [Cài đặt](#Cài-đặt)
+- [API Documentation](#API-Documentation)
 
 
 ## Giới thiệu
@@ -77,3 +78,6 @@ $ swag init
 ```sh
 $ go run main.go
 ```
+
+## API Documentation
+Swagger link: http://site.ap.loclx.io/swagger/index.html
