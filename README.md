@@ -63,13 +63,17 @@ config.local.json: Thông tin của server mysql (address hiện đang bị lỗ
 }
 ```
 testdata.sql: Các query tạo bảng và dữ liệu thử nghiệm để import vào phpmyadmin
+
 controller/
 - API definition, mỗi file tương ứng với một chức năng chính của webiste
 - internalfunction.go : Function sử dụng nội bộ trong package controller
+
 model/
 - Chứa các struct model cần thiết cho gorm và gửi JSON về FrontEnd
+
 view/images/
 - Chứa ảnh upload lên server
+
 docs/
 - File tạo bởi swagger
 
