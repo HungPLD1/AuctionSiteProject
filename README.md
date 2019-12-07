@@ -4,8 +4,9 @@ Project mô phỏng website bán đấu giá của TechMaster
 ## Contents
 - [Giới thiệu](#Giới-thiệu)
 - [Thành viên](#Thành-viên)
-- [Công cụ](#Công-cụ)
+- [Tính năng](#Tính-năng)
 - [Cấu trúc Database](#Cấu-trúc-Database)
+- [Công cụ](#Công-cụ)
 - [Kiến trúc](#Kiến-trúc)
 - [Cài đặt](#Cài-đặt)
 - [API Documentation](#API-Documentation)
@@ -26,6 +27,16 @@ Thành viên của project bao gồm:
 
 Các công việc khác như làm documentation, tạo mockup data, viết test, làm presentation sẽ được thực hiện đồng thời từ cả hai phía.
 
+## Tính Năng
+User story của người dùng.
+<img align="right" src="https://i.imgur.com/hjFGNEF.png">
+<img align="right" src="https://i.imgur.com/tkSTjlV.png">
+
+## Cấu trúc Database
+Cấu trúc các bảng trong database của project
+
+<img align="right" src="https://imgur.com/JXMaoYC.png">
+
 ## Công cụ
 Cấu trúc và các công cụ được sử dụng của project:
 - Virtualization: docker
@@ -38,11 +49,6 @@ Cấu trúc và các công cụ được sử dụng của project:
 - FrontEnd:
 - Api documentation: GoSwagger: https://github.com/go-swagger/go-swagger
 - Proxy: Localxpose: https://localxpose.io/
-
-## Cấu trúc Database
-Cấu trúc các bảng trong database của project
-
-<img align="right" src="https://imgur.com/JXMaoYC.png">
 
 ## Kiến trúc
 Repositories này chứa phần BackEnd của project bao gồm các Rest API, swagger documentation:
