@@ -31,6 +31,103 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "description": "Create new Categories, return a JSON message",
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
+        "/history/bid": {
+            "get": {
+                "description": "Get bid activity/history of user.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.BidHistory"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
+        "/history/sell": {
+            "get": {
+                "description": "Get sell history of user.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SellHistory"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
             }
         },
         "/login": {
@@ -64,6 +161,55 @@
                         }
                     },
                     "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
+        "/logs": {
+            "post": {
+                "description": "Create a new bidding session , return a JSON message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Information to be provided",
+                        "name": "NewBidInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.NewBidLog"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
                         "description": "Error message",
                         "schema": {
                             "type": "body"
@@ -294,6 +440,53 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.SessionSearch"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new bidding session , return a JSON message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Information to be provided",
+                        "name": "NewSessionInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SessionSearch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
                         }
                     },
                     "500": {
@@ -559,11 +752,43 @@
         }
     },
     "definitions": {
+        "model.BidHistory": {
+            "type": "object",
+            "properties": {
+                "bidamount": {
+                    "type": "integer"
+                },
+                "biddate": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "itemid": {
+                    "type": "integer"
+                },
+                "itemname": {
+                    "type": "string"
+                },
+                "sessionenddate": {
+                    "type": "string"
+                },
+                "sessionid": {
+                    "type": "integer"
+                },
+                "sessionstartdate": {
+                    "type": "string"
+                }
+            }
+        },
         "model.BidSessionLog": {
             "type": "object",
             "properties": {
                 "amount": {
-                    "type": "number"
+                    "type": "integer"
                 },
                 "createAt": {
                     "type": "string"
@@ -579,11 +804,11 @@
         "model.Categories": {
             "type": "object",
             "properties": {
-                "categoriesName": {
-                    "type": "string"
-                },
                 "categoriesid": {
                     "type": "integer"
+                },
+                "categoriesname": {
+                    "type": "string"
                 }
             }
         },
@@ -596,15 +821,6 @@
                 "createAt": {
                     "type": "string"
                 },
-                "imagelink": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "itemName": {
-                    "type": "string"
-                },
                 "itemcondition": {
                     "type": "string"
                 },
@@ -614,13 +830,62 @@
                 "itemid": {
                     "type": "integer"
                 },
-                "name": {
+                "itemname": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NewBidLog": {
+            "type": "object",
+            "required": [
+                "amount",
+                "sessionid"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "sessionid": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SellHistory": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "itemid": {
+                    "type": "integer"
+                },
+                "itemname": {
+                    "type": "string"
+                },
+                "sessionenddate": {
+                    "type": "string"
+                },
+                "sessionid": {
+                    "type": "integer"
+                },
+                "sessionstartdate": {
                     "type": "string"
                 }
             }
         },
         "model.SessionSearch": {
             "type": "object",
+            "required": [
+                "categoriesid",
+                "currentbid",
+                "itemcondition",
+                "itemdescription",
+                "itemname",
+                "minimumincreasebid"
+            ],
             "properties": {
                 "biddingLog": {
                     "type": "array",
@@ -628,11 +893,11 @@
                         "$ref": "#/definitions/model.BidSessionLog"
                     }
                 },
-                "categoriesName": {
-                    "type": "string"
-                },
                 "categoriesid": {
                     "type": "integer"
+                },
+                "categoriesname": {
+                    "type": "string"
                 },
                 "currentbid": {
                     "type": "integer"
@@ -646,7 +911,7 @@
                         "type": "string"
                     }
                 },
-                "itemName": {
+                "itemcondition": {
                     "type": "string"
                 },
                 "itemdescription": {
@@ -655,7 +920,10 @@
                 "itemid": {
                     "type": "integer"
                 },
-                "minimumIncreaseBid": {
+                "itemname": {
+                    "type": "string"
+                },
+                "minimumincreasebid": {
                     "type": "integer"
                 },
                 "sellerid": {
@@ -669,6 +937,9 @@
                 },
                 "startdate": {
                     "type": "string"
+                },
+                "viewcount": {
+                    "type": "integer"
                 }
             }
         },

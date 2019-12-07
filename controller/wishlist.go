@@ -38,24 +38,24 @@ func ShowWishList(c *gin.Context) {
 		return
 	}
 
-	db := GetDBInstance().Db
-	var wishlist []model.Items
-	var images []model.ItemImage
+	var wishlist []model.SessionSearch
 
-	db.Table("item").
-		Joins("JOIN user_wishlist ON item.item_id = user_wishlist.item_id").
+	errGetSession := searchSessionSQL().
+		Joins("JOIN user_wishlist ON user_wishlist.item_id = bid_session.item_id").
 		Where("user_wishlist.user_id = ?", userID).
-		Select("item.*").
-		Scan(&wishlist)
-
-	for i, item := range wishlist {
-		db.Table("item_image").
-			Where("item_id = ?", item.ItemID).
-			Select("*").
-			Scan(&images)
-		for _, link := range images {
-			wishlist[i].Images = append([]string(wishlist[i].Images), link.Images)
-		}
+		Scan(&wishlist).
+		Error
+	if errGetSession != nil {
+		log.Println(errGetSession)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetSession,
+			"message": "Error while fetching session data",
+		})
+		return
+	}
+	for i, _ := range wishlist {
+		wishlist[i].BidLogs = attachSessionLogs(wishlist[i])
+		wishlist[i].Images = attachSessionImages(wishlist[i].ItemID, wishlist[i].Images)
 	}
 	c.JSON(200, wishlist)
 	return

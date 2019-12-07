@@ -147,15 +147,15 @@ func attachSessionLogs(session model.SessionSearch) []model.BidSessionLog {
 }
 
 /** Attach the images data to session model */
-func attachSessionImages(session *model.SessionSearch) model.SessionSearch {
+func attachSessionImages(itemid int, imageslink []string) []string {
 	db := GetDBInstance().Db
 	var images []string
 	db.Table("item_image").
-		Where("item_id = ?", session.ItemID).
+		Where("item_id = ?", itemid).
 		Select("*").
 		Pluck("images", &images)
-	session.Images = append([]string(session.Images), images...)
-	return *session
+		imageslink = append([]string(imageslink), images...)
+	return imageslink
 }
 
 /****************************NOT YET INCLUDED*************************/

@@ -34,3 +34,32 @@ func SearchCategories(c *gin.Context) {
 	c.JSON(200, categories)
 	return
 }
+
+//  @Description Create new Categories, return a JSON message
+//  @Success 200 {body} string "Success message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /categories [POST]
+func NewCategories(c *gin.Context) {
+	db := GetDBInstance().Db
+	var categories model.Categories
+	errJSON := c.BindJSON(&categories)
+	if errJSON != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errJSON,
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+
+	errCreate := db.Table("categories").Create(categories).Error
+	if errCreate != nil {
+		log.Println(errCreate)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errCreate,
+			"message": "Error while creating new Categories!",
+		})
+		return
+	}
+	c.JSON(200, "Successfully create new Categories!")
+	return
+}

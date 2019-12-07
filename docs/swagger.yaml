@@ -1,8 +1,29 @@
 definitions:
+  model.BidHistory:
+    properties:
+      bidamount:
+        type: integer
+      biddate:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      itemid:
+        type: integer
+      itemname:
+        type: string
+      sessionenddate:
+        type: string
+      sessionid:
+        type: integer
+      sessionstartdate:
+        type: string
+    type: object
   model.BidSessionLog:
     properties:
       amount:
-        type: number
+        type: integer
       createAt:
         type: string
       sessionid:
@@ -12,10 +33,10 @@ definitions:
     type: object
   model.Categories:
     properties:
-      categoriesName:
-        type: string
       categoriesid:
         type: integer
+      categoriesname:
+        type: string
     type: object
   model.Items:
     properties:
@@ -23,19 +44,40 @@ definitions:
         type: integer
       createAt:
         type: string
-      imagelink:
-        items:
-          type: string
-        type: array
-      itemName:
-        type: string
       itemcondition:
         type: string
       itemdescription:
         type: string
       itemid:
         type: integer
-      name:
+      itemname:
+        type: string
+    type: object
+  model.NewBidLog:
+    properties:
+      amount:
+        type: integer
+      sessionid:
+        type: integer
+    required:
+    - amount
+    - sessionid
+    type: object
+  model.SellHistory:
+    properties:
+      images:
+        items:
+          type: string
+        type: array
+      itemid:
+        type: integer
+      itemname:
+        type: string
+      sessionenddate:
+        type: string
+      sessionid:
+        type: integer
+      sessionstartdate:
         type: string
     type: object
   model.SessionSearch:
@@ -44,10 +86,10 @@ definitions:
         items:
           $ref: '#/definitions/model.BidSessionLog'
         type: array
-      categoriesName:
-        type: string
       categoriesid:
         type: integer
+      categoriesname:
+        type: string
       currentbid:
         type: integer
       enddate:
@@ -56,13 +98,15 @@ definitions:
         items:
           type: string
         type: array
-      itemName:
+      itemcondition:
         type: string
       itemdescription:
         type: string
       itemid:
         type: integer
-      minimumIncreaseBid:
+      itemname:
+        type: string
+      minimumincreasebid:
         type: integer
       sellerid:
         type: string
@@ -72,6 +116,15 @@ definitions:
         type: integer
       startdate:
         type: string
+      viewcount:
+        type: integer
+    required:
+    - categoriesid
+    - currentbid
+    - itemcondition
+    - itemdescription
+    - itemname
+    - minimumincreasebid
     type: object
   model.UserCommon:
     properties:
@@ -131,6 +184,69 @@ paths:
           description: Error message
           schema:
             type: body
+    post:
+      description: Create new Categories, return a JSON message
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /history/bid:
+    get:
+      description: Get bid activity/history of user.
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BidHistory'
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /history/sell:
+    get:
+      description: Get sell history of user.
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SellHistory'
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
   /login:
     post:
       description: Login by JSON form, return a jwt session token in JSON form
@@ -153,6 +269,38 @@ paths:
           schema:
             type: body
         "400":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+  /logs:
+    post:
+      description: Create a new bidding session , return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Information to be provided
+        in: body
+        name: NewBidInfo
+        required: true
+        schema:
+          $ref: '#/definitions/model.NewBidLog'
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
           description: Error message
           schema:
             type: body
@@ -304,6 +452,37 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.SessionSearch'
+        "500":
+          description: Error message
+          schema:
+            type: body
+    post:
+      description: Create a new bidding session , return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Information to be provided
+        in: body
+        name: NewSessionInfo
+        required: true
+        schema:
+          $ref: '#/definitions/model.SessionSearch'
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
         "500":
           description: Error message
           schema:

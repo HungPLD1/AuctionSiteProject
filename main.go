@@ -33,32 +33,39 @@ func main() {
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	//swagger init
-	url := ginSwagger.URL("http://site.loclx.io/swagger/doc.json") // The url pointing to API definition
+	url := ginSwagger.URL("http://site.ap.loclx.io/swagger/doc.json") // The url pointing to API definition
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	router.GET("/", func(c *gin.Context) {
 		c.String(200, "Welcome to hellogorm")
 	})
 
-	router.GET("/categories", controller.SearchCategories) //API: Search categories by id, return all by default
+	router.GET("/categories", controller.SearchCategories)
+	router.POST("/categories", controller.NewCategories)
 
-	router.GET("/session/:id", controller.BidSessionByID) //API: Get Bid Session
-	router.GET("/session", controller.BidSessionByQuery)  //API: Get Bid Session
-	router.GET("/logs/:id", controller.BidLogs)           //APT: Get Bid Session Logs
+	router.GET("/session/:id", controller.BidSessionByID)
+	router.GET("/session", controller.BidSessionByQuery)
+	router.POST("/session", jwt.Auth(model.SecretKey), controller.CreateBidSession)
 
-	router.POST("/signup", controller.RegisterJSON)                                 //API: Register new Account by JSON
-	router.POST("/login", controller.LoginJSON)                                     //API: Login by JSON
-	router.GET("/profile", jwt.Auth(model.SecretKey), controller.UserProfile)       //API: Show user profile
-	router.PUT("/profile", jwt.Auth(model.SecretKey), controller.UserProfileUpdate) //API: Modify user profile
-	router.PUT("/password", jwt.Auth(model.SecretKey), controller.UpdatePassword)   //API: Change user password
+	router.GET("/logs/:id", controller.BidLogs)
+	router.POST("/logs", jwt.Auth(model.SecretKey), controller.NewBid)
 
-	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)                  //API: Show user wishlist
-	router.POST("/wishlist/:id", jwt.Auth(model.SecretKey), controller.AddItemToWishList)        //API: Add new item to wishlist
-	router.DELETE("/wishlist/:id", jwt.Auth(model.SecretKey), controller.RemoveItemFromWishList) //API: Delete item from wishlist
+	router.GET("/history/bid", jwt.Auth(model.SecretKey), controller.BidSessionHistory)
+	router.GET("/history/sell", jwt.Auth(model.SecretKey), controller.SellSessionHistory)
 
-	router.GET("/review/:id", controller.ShowReview) //API: Show user review
+	router.POST("/signup", controller.RegisterJSON)
+	router.POST("/login", controller.LoginJSON)
+	router.GET("/profile", jwt.Auth(model.SecretKey), controller.UserProfile)
+	router.PUT("/profile", jwt.Auth(model.SecretKey), controller.UserProfileUpdate)
+	router.PUT("/password", jwt.Auth(model.SecretKey), controller.UpdatePassword)
 
-	router.POST("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages) //API: Upload image of item to database
+	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)
+	router.POST("/wishlist/:id", jwt.Auth(model.SecretKey), controller.AddItemToWishList)
+	router.DELETE("/wishlist/:id", jwt.Auth(model.SecretKey), controller.RemoveItemFromWishList)
+
+	router.GET("/review/:id", controller.ShowReview)
+
+	router.POST("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages)
 	//router.DELETE("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages) //API: Delete image of item from database
 
 	router.Run(":8080")

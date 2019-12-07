@@ -19,17 +19,19 @@ import (
 type SessionSearch struct {
 	SessionID          int             `gorm:"type:bigint(20)" json:"sessionid"`
 	ItemID             int             `gorm:"type:bigint(20)" json:"itemid"`
-	ItemName           string          `gorm:"type:varchar(255) json:"itemname"`
-	CategoriesID       int             `gorm:"type:int(11)" json:"categoriesid"`
-	CategoriesName     string          `gorm:"type:varchar(255) json:"categoriesname"`
-	ItemDescription    string          `gorm:"type:text" json:"itemdescription"`
+	ItemName           string          `gorm:"type:varchar(255)" json:"itemname" binding:"required"`
+	CategoriesID       int             `gorm:"type:int(11)" json:"categoriesid" binding:"required"`
+	CategoriesName     string          `gorm:"type:varchar(255)" json:"categoriesname"`
+	ItemDescription    string          `gorm:"type:text" json:"itemdescription" binding:"required"`
+	ItemCondition      string          `gorm:"type:varchar(30)" json:"itemcondition" binding:"required"`
 	SessionStartDate   time.Time       `gorm:"type:datetime" json:"startdate"`
 	SessionEndDate     time.Time       `gorm:"type:datetime" json:"enddate"`
-	MinimumIncreaseBid int             `gorm: "type:int(11)" json:"minimumbid"`
+	MinimumIncreaseBid int             `gorm:"type:int(11)" json:"minimumincreasebid" binding:"required"`
+	UserviewCount      int             `gorm:"type:int(11)" json:"viewcount"`
 	Images             []string        `json:"imagelink"`
 	SellerID           string          `gorm:"type:varchar(255)" json:"sellerid"`
 	SellerName         string          `gorm:"type:varchar(100)" json:"sellername"`
-	CurrentBid         int             `gorm:"type:bigint(20)" json:"currentbid"`
+	CurrentBid         int             `gorm:"type:bigint(20)" json:"currentbid" binding:"required"`
 	BidLogs            []BidSessionLog `json:"biddingLog"`
 }
 
@@ -37,18 +39,16 @@ type SessionSearch struct {
 type Items struct {
 	ItemID          int       `gorm:"type:bigint(20)" json:"itemid"`
 	CategoriesID    int       `gorm:"type:int(11)" json:"categoriesid"`
-	ItemName        string    `gorm:"type:varchar(255) json:"itemname"`
+	ItemName        string    `gorm:"type:varchar(255)" json:"itemname"`
 	ItemDescription string    `gorm:"type:text" json:"itemdescription"`
 	ItemCondition   string    `gorm:"type:varchar(30)" json:"itemcondition"`
-	ItemCreateAt    time.Time `gorm:"type:datetime" json:"createAt"`
-	Images          []string  `json:"imagelink"`
-	UserName        string    `gorm:"type:varchar(100)" json:"name"`
+	ItemCreateat    time.Time `gorm:"type:datetime" json:"createAt"`
 }
 
 //Categories ...Used by gorm and json
 type Categories struct {
 	CategoriesID   int    `gorm:"type:int(11)" json:"categoriesid"`
-	CategoriesName string `gorm:"type:varchar(255) json:"categoriesname"`
+	CategoriesName string `gorm:"type:varchar(255)" json:"categoriesname"`
 }
 
 //ItemImage ...Used by gorm and json
@@ -78,9 +78,9 @@ type BidSession struct {
 	SellerID           string    `gorm:"type:varchar(255)" json:"sellerid"`
 	SessionStartDate   time.Time `gorm:"type:datetime" json:"startdate"`
 	SessionEndDate     time.Time `gorm:"type:datetime" json:"enddate"`
-	UserviewCount      int       `gorm: "type:int(11)" json:"viewcount"`
+	UserviewCount      int       `gorm:"type:int(11)" json:"viewcount"`
 	WinnerID           string    `gorm:"type:varchar(255)" json:"winnerid"`
-	MinimumIncreaseBid int       `gorm: "type:int(11)" json:"minimumbid"`
+	MinimumIncreaseBid int       `gorm:"type:int(11)" json:"minimumbid"`
 	CurrentBid         int       `gorm:"type:bigint(20)" json:"currentbid"`
 }
 
@@ -88,7 +88,7 @@ type BidSession struct {
 type BidSessionLog struct {
 	UserID    string    `gorm:"type:varchar(255)" json:"userid"`
 	SessionID int       `gorm:"type:bigint(20)" json:"sessionid"`
-	BidAmount float64   `gorm:"type:float(14,2)" json:"amount"`
+	BidAmount int       `gorm:"type:int" json:"amount"`
 	BidDate   time.Time `gorm:"type:datetime" json:"createAt"`
 }
 
@@ -115,7 +115,7 @@ type SignupLoginResponse struct {
 	Code         int        `json:"code"`
 	Message      string     `json:"message"`
 	Data         UserCommon `json:"data"`
-	SessionToken string     `json:"sessiontoken`
+	SessionToken string     `json:"sessiontoken"`
 }
 
 //AuthorizationHeader ...Used to get session token in header
@@ -131,8 +131,36 @@ type UploadItemImageForm struct {
 
 //ModifyPassword ...For password update
 type ModifyPassword struct {
-	OldPassword string `json:"oldpassword"`
-	NewPassword string `json:"newpassword"`
+	OldPassword string `json:"oldpassword" binding:"required"`
+	NewPassword string `json:"newpassword" binding:"required"`
+}
+
+//NewBidLog ...Used when user create a new bid
+type NewBidLog struct {
+	SessionID int ` json:"sessionid" binding:"required"`
+	BidAmount int ` json:"amount" binding:"required"`
+}
+
+//BidHistory ...Used by controller.BidSessionHistory
+type BidHistory struct {
+	SessionID        int       ` json:"sessionid"`
+	ItemID           int       `json:"itemid"`
+	ItemName         string    ` json:"itemname"`
+	Images           []string  `json:"images"`
+	BidAmount        int       `json:"bidamount"`
+	BidDate          time.Time `json:"biddate"`
+	SessionStartDate time.Time `json:"sessionstartdate"`
+	SessionEndDate   time.Time `json:"sessionenddate"`
+}
+
+//SellHistory ...Used by controller.SellSessionHistory
+type SellHistory struct {
+	SessionID        int       ` json:"sessionid"`
+	ItemID           int       `json:"itemid"`
+	ItemName         string    ` json:"itemname"`
+	Images           []string  `json:"images"`
+	SessionStartDate time.Time `json:"sessionstartdate"`
+	SessionEndDate   time.Time `json:"sessionenddate"`
 }
 
 //Config ...Database login info
