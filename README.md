@@ -58,14 +58,14 @@ main.go:
 - Database initialization
 - Set listening port (default 8080) 
 
-config.local.json: Thông tin của server mysql (address hiện đang bị lỗi)
+config.local.json: Thông tin của server mysql
 ```json
 {
     "database": {
-       "user": "root",
-       "password": "123",
-       "database": "hieu_bidding_project",
-       "address": "45.118.145.149:8080"
+       "user": "ID4g15DBAH",
+       "password": "tjxApwdlCR",
+       "database": "ID4g15DBAH",
+       "address": "remotemysql.com:3306"
     }    
 }
 ```
