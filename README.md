@@ -59,16 +59,7 @@ main.go:
 - Set listening port (default 8080) 
 
 config.local.json: Thông tin của server mysql
-```json
-{
-    "database": {
-       "user": "ID4g15DBAH",
-       "password": "tjxApwdlCR",
-       "database": "ID4g15DBAH",
-       "address": "remotemysql.com:3306"
-    }    
-}
-```
+
 testdata.sql: Các query tạo bảng và dữ liệu thử nghiệm để import vào phpmyadmin
 
 controller/
