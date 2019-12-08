@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"hellogorm/model"
+	"AuctionSiteProject/model"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -150,6 +151,83 @@ func CreateBidSession(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, "Successfully create new session!")
+	return
+}
+
+//  @Description Delete bid session (Administrator only)
+//  @Param Authorization header string true "Session token"
+//  @Param sessionid path string true "session id to be deleted"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /session/:id [DELETE]
+func DeleteBidSession(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	//check if user are adminitrator
+	if check, err := checkAdministrator(userID); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
+			"message": "Error while fetching user data",
+		})
+		return
+	} else if check == false {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Only Administrator can use this API!",
+		})
+		return
+	}
+
+	sessionid, _ := strconv.Atoi(c.Param("id"))
+	db := GetDBInstance().Db
+	var itemid []int
+	errGetItemID := db.Table("bid_session").Where("session_id = ?", sessionid).Pluck("item_id", &itemid).Error
+	errDeleteSession := db.Table("bid_session").Where("session_id = ?", sessionid).Delete(&model.BidSession{}).Error
+	errDeleteItem := db.Table("item").Where("item_id = ?", itemid[0]).Delete(&model.Items{}).Error
+	if errGetItemID != nil {
+		log.Println(errGetItemID)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetItemID,
+			"message": "Error while fetching session data",
+		})
+		return
+	}
+	if errDeleteSession != nil {
+		log.Println(errDeleteSession)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errDeleteSession,
+			"message": "Error while deleting session data",
+		})
+		return
+	}
+	if errDeleteItem != nil {
+		log.Println(errDeleteItem)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errDeleteItem,
+			"message": "Error while deleting item data",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, "Successfully delete bid session")
 	return
 }
 

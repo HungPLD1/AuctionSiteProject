@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"hellogorm/model"
+	"AuctionSiteProject/model"
 	"log"
 	"net/http"
 	"strconv"

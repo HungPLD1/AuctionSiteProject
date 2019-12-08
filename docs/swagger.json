@@ -252,6 +252,55 @@
                 }
             }
         },
+        "/logs/last": {
+            "delete": {
+                "description": "Delete the last bid log (Administrator only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Bid Log info",
+                        "name": "LogInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Deletelastlog"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
         "/password": {
             "put": {
                 "description": "Add new item to wishlist, return a JSON message",
@@ -515,6 +564,51 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.SessionSearch"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete bid session (Administrator only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "session id to be deleted",
+                        "name": "sessionid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
                         }
                     },
                     "500": {
@@ -808,6 +902,21 @@
                     "type": "integer"
                 },
                 "categoriesname": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Deletelastlog": {
+            "type": "object",
+            "required": [
+                "sessionid",
+                "userid"
+            ],
+            "properties": {
+                "sessionid": {
+                    "type": "integer"
+                },
+                "userid": {
                     "type": "string"
                 }
             }

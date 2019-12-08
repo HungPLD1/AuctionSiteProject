@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"hellogorm/model"
+	"AuctionSiteProject/model"
 	"log"
 	"strings"
 	"time"
@@ -11,6 +11,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+const administrator int = 9
 
 /**********************************************************************/
 /**************************INTERNAL FUNCTIONS**************************/
@@ -125,6 +127,22 @@ func checkSessionToken(token string) (string, error) {
 	return userID, nil
 }
 
+/** Check if user are Administrator*/
+func checkAdministrator(userID string) (bool, error) {
+	db := GetDBInstance().Db
+	var accesslevel []int
+	if err := db.Table("user_common").
+		Where("user_id = ?", userID).
+		Pluck("user_access_level", &accesslevel).
+		Error; err != nil {
+		return false, err
+	}
+	if accesslevel[0] != administrator {
+		return false, nil
+	}
+	return true, nil
+}
+
 /** SQL query for session searching*/
 func searchSessionSQL() *gorm.DB {
 	db := GetDBInstance().Db
@@ -154,7 +172,7 @@ func attachSessionImages(itemid int, imageslink []string) []string {
 		Where("item_id = ?", itemid).
 		Select("*").
 		Pluck("images", &images)
-		imageslink = append([]string(imageslink), images...)
+	imageslink = append([]string(imageslink), images...)
 	return imageslink
 }
 

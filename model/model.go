@@ -163,6 +163,12 @@ type SellHistory struct {
 	SessionEndDate   time.Time `json:"sessionenddate"`
 }
 
+//Deletelastlog ...User by controller.DeleteBidLogs
+type Deletelastlog struct {
+	SessionID int    ` json:"sessionid" binding:"required"`
+	UserID    string `json:"userid" binding:"required"`
+}
+
 //Config ...Database login info
 type Config struct {
 	Database struct {

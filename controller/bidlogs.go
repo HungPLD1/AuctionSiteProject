@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"hellogorm/model"
+	"AuctionSiteProject/model"
 	"log"
 	"net/http"
 	"time"
@@ -140,5 +140,76 @@ func NewBid(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, "Successfully create new Bid to database!")
+	return
+}
+
+//  @Description Delete the last bid log (Administrator only)
+//  @Param Authorization header string true "Session token"
+//  @Param LogInfo body model.Deletelastlog true "Bid Log info"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /logs/last [DELETE]
+func DeleteLastBidLogs(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	//check if user are adminitrator
+	if check, err := checkAdministrator(userID); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
+			"message": "Error while fetching user data",
+		})
+		return
+	} else if check == false {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Only Administrator can use this API!",
+		})
+		return
+	}
+
+	var loginfo model.Deletelastlog
+	if err := c.BindJSON(&loginfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err,
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+	db := GetDBInstance().Db
+	var bidtime []time.Time
+	db.Table("bid_session_log").
+		Where("session_id = ? AND user_id = ?", loginfo.SessionID, loginfo.UserID).
+		Pluck("MAX(bid_date)", &bidtime)
+	errDelete := db.Table("bid_session_log").
+		Where("user_id = ? AND session_id = ? AND bid_date = ?", loginfo.UserID, loginfo.SessionID, bidtime[0]).
+		Delete(&model.BidSessionLog{}).
+		Error
+	if errDelete != nil {
+		log.Println(errDelete)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errDelete,
+			"message": "Error while deleting bid log!",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, "Successfully delete bid log!")
 	return
 }

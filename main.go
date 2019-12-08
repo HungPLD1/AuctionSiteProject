@@ -1,10 +1,10 @@
 package main
 
 import (
-	"hellogorm/controller"
-	model "hellogorm/model"
+	"AuctionSiteProject/controller"
+	model "AuctionSiteProject/model"
 
-	_ "hellogorm/docs"
+	_ "AuctionSiteProject/docs"
 
 	"github.com/gin-gonic/contrib/jwt"
 	"github.com/gin-gonic/gin"
@@ -33,7 +33,7 @@ func main() {
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	//swagger init
-	url := ginSwagger.URL("http://site.ap.loclx.io/swagger/doc.json") // The url pointing to API definition
+	url := ginSwagger.URL("http://siteb.ap.loclx.io/swagger/doc.json") // The url pointing to API definition
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	router.GET("/", func(c *gin.Context) {
@@ -66,7 +66,11 @@ func main() {
 	router.GET("/review/:id", controller.ShowReview)
 
 	router.POST("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages)
-	//router.DELETE("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages) //API: Delete image of item from database
+	router.GET("/upload", controller.SendImages)
+
+	//ADMIN ONLY
+	router.DELETE("/session/:id", jwt.Auth(model.SecretKey), controller.DeleteBidSession)
+	router.DELETE("/logs/last", jwt.Auth(model.SecretKey), controller.DeleteLastBidLogs)
 
 	router.Run(":8080")
 }

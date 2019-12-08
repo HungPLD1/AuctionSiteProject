@@ -38,6 +38,16 @@ definitions:
       categoriesname:
         type: string
     type: object
+  model.Deletelastlog:
+    properties:
+      sessionid:
+        type: integer
+      userid:
+        type: string
+    required:
+    - sessionid
+    - userid
+    type: object
   model.Items:
     properties:
       categoriesid:
@@ -326,6 +336,38 @@ paths:
           description: Error message
           schema:
             type: body
+  /logs/last:
+    delete:
+      description: Delete the last bid log (Administrator only)
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Bid Log info
+        in: body
+        name: LogInfo
+        required: true
+        schema:
+          $ref: '#/definitions/model.Deletelastlog'
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
   /password:
     put:
       description: Add new item to wishlist, return a JSON message
@@ -488,6 +530,36 @@ paths:
           schema:
             type: body
   /session/:id:
+    delete:
+      description: Delete bid session (Administrator only)
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: session id to be deleted
+        in: path
+        name: sessionid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
     get:
       description: Show Session information by ID, return a JSON form
       parameters:
