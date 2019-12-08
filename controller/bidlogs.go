@@ -24,7 +24,7 @@ func BidLogs(c *gin.Context) {
 		Select("user_id, bid_amount, bid_date").
 		Scan(&logs).
 		Error
-	if errgetLogs != nil {q
+	if errgetLogs != nil {
 		log.Println(errgetLogs)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   errgetLogs,
