@@ -4,10 +4,12 @@ Project mô phỏng website bán đấu giá của TechMaster
 ## Contents
 - [Giới thiệu](#Giới-thiệu)
 - [Thành viên](#Thành-viên)
-- [Công cụ](#Công-cụ)
+- [Tính năng](#Tính-năng)
 - [Cấu trúc Database](#Cấu-trúc-Database)
+- [Công cụ](#Công-cụ)
 - [Kiến trúc](#Kiến-trúc)
 - [Cài đặt](#Cài-đặt)
+- [API Documentation](#API-Documentation)
 
 
 ## Giới thiệu
@@ -25,6 +27,16 @@ Thành viên của project bao gồm:
 
 Các công việc khác như làm documentation, tạo mockup data, viết test, làm presentation sẽ được thực hiện đồng thời từ cả hai phía.
 
+## Tính Năng
+User story của người dùng.
+<img align="right" src="https://i.imgur.com/hjFGNEF.png">
+<img align="right" src="https://i.imgur.com/tkSTjlV.png">
+
+## Cấu trúc Database
+Cấu trúc các bảng trong database của project
+
+<img align="right" src="https://imgur.com/JXMaoYC.png">
+
 ## Công cụ
 Cấu trúc và các công cụ được sử dụng của project:
 - Virtualization: docker
@@ -38,14 +50,33 @@ Cấu trúc và các công cụ được sử dụng của project:
 - Api documentation: GoSwagger: https://github.com/go-swagger/go-swagger
 - Proxy: Localxpose: https://localxpose.io/
 
-## Cấu trúc Database
-Cấu trúc các bảng trong database của project
+## Kiến trúc
+Repositories này chứa phần BackEnd của project bao gồm các Rest API, swagger documentation:
 
-<img align="right" src="https://imgur.com/JXMaoYC.png">
+main.go:
+- API declaration
+- Database initialization
+- Set listening port (default 8080) 
+
+config.local.json: Thông tin của server mysql
+
+testdata.sql: Các query tạo bảng và dữ liệu thử nghiệm để import vào phpmyadmin
+
+controller/
+- API definition, mỗi file tương ứng với một chức năng chính của webiste
+- internalfunction.go : Function sử dụng nội bộ trong package controller
+
+model/
+- Chứa các struct model cần thiết cho gorm và gửi JSON về FrontEnd
+
+view/images/
+- Chứa ảnh upload lên server
+
+docs/
+- File tạo bởi swagger
 
 
 ## Cài đặt
-Repositories này chứa phần BackEnd của project bao gồm các Rest API, swagger documentation:
 1. Kéo thư mục về máy
 ```sh
 $ git clone https://github.com/Velverto/AuctionSiteProject
@@ -77,3 +108,6 @@ $ swag init
 ```sh
 $ go run main.go
 ```
+
+## API Documentation
+Swagger link: http://site.ap.loclx.io/swagger/index.html
