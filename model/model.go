@@ -135,6 +135,15 @@ type ModifyPassword struct {
 	NewPassword string `json:"newpassword" binding:"required"`
 }
 
+//UpdateSession ...Used by controller.UpdateBidSession
+type UpdateSession struct {
+	SessionID		   int			   `json:"sessionid" binding:"required"`
+	ItemName           string          `json:"itemname"`
+	ItemDescription    string          `json:"itemdescription"`
+	ItemCondition      string          `json:"itemcondition"`
+	//Images             []string        `json:"imagelink"`
+}
+
 //NewBidLog ...Used when user create a new bid
 type NewBidLog struct {
 	SessionID int ` json:"sessionid" binding:"required"`

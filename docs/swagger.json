@@ -499,6 +499,53 @@
                     }
                 }
             },
+            "put": {
+                "description": "Update session information, return a JSON message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Information to be provided",
+                        "name": "NewSessionInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateSession"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new bidding session , return a JSON message",
                 "parameters": [
@@ -1048,6 +1095,26 @@
                     "type": "string"
                 },
                 "viewcount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.UpdateSession": {
+            "type": "object",
+            "required": [
+                "sessionid"
+            ],
+            "properties": {
+                "itemcondition": {
+                    "type": "string"
+                },
+                "itemdescription": {
+                    "type": "string"
+                },
+                "itemname": {
+                    "type": "string"
+                },
+                "sessionid": {
                     "type": "integer"
                 }
             }

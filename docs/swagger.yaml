@@ -136,6 +136,19 @@ definitions:
     - itemname
     - minimumincreasebid
     type: object
+  model.UpdateSession:
+    properties:
+      itemcondition:
+        type: string
+      itemdescription:
+        type: string
+      itemname:
+        type: string
+      sessionid:
+        type: integer
+    required:
+    - sessionid
+    type: object
   model.UserCommon:
     properties:
       accesslevel:
@@ -512,6 +525,37 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/model.SessionSearch'
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+    put:
+      description: Update session information, return a JSON message
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Information to be provided
+        in: body
+        name: NewSessionInfo
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateSession'
       responses:
         "200":
           description: Success message

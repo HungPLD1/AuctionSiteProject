@@ -46,6 +46,7 @@ func main() {
 	router.GET("/session/:id", controller.BidSessionByID)
 	router.GET("/session", controller.BidSessionByQuery)
 	router.POST("/session", jwt.Auth(model.SecretKey), controller.CreateBidSession)
+	router.PUT("/session", jwt.Auth(model.SecretKey), controller.UpdateBidSession)
 
 	router.GET("/logs/:id", controller.BidLogs)
 	router.POST("/logs", jwt.Auth(model.SecretKey), controller.NewBid)

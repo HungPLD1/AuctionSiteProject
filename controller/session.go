@@ -154,6 +154,90 @@ func CreateBidSession(c *gin.Context) {
 	return
 }
 
+//  @Description Update session information, return a JSON message
+//  @Param Authorization header string true "Session token"
+//  @Param NewSessionInfo body model.UpdateSession true "Information to be provided"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /session [PUT]
+func UpdateBidSession(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	var updatedata model.UpdateSession
+	errJSON := c.BindJSON(&updatedata)
+	if errJSON != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errJSON,
+			"message": "Not a valid JSON!",
+		})
+		return
+	}
+
+	db := GetDBInstance().Db
+	var itemID []int
+	var sellerid []string
+	db.Table("bid_session").
+		Where("session_id = ?", updatedata.SessionID).
+		Pluck("item_id", &itemID).
+		Pluck("seller_id", &sellerid)
+
+	//check if user are administrator, if not then check if user are seller
+	if check, err := checkAdministrator(userID); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
+			"message": "Error while fetching user data",
+		})
+		return
+	} else if check == false {
+		if userID != sellerid[0] {
+			c.JSON(http.StatusUnauthorized, "Unauthorized : Not the session owner")
+			return
+		}
+	}
+
+	//update the session/item info
+	newitem := model.Items{
+		ItemName:        updatedata.ItemName,
+		ItemDescription: updatedata.ItemDescription,
+		ItemCondition:   updatedata.ItemCondition,
+	}
+	errUpdate := db.Table("item").
+		Model(&model.Items{}).
+		Where("item_id = ?", itemID[0]).
+		Updates(newitem).
+		Error
+	if errUpdate != nil {
+		log.Println(errUpdate)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errUpdate,
+			"message": "Error while updating session",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, "Successfully update bid session!")
+	return
+}
+
 //  @Description Delete bid session (Administrator only)
 //  @Param Authorization header string true "Session token"
 //  @Param sessionid path string true "session id to be deleted"
