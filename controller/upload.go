@@ -81,6 +81,7 @@ func UploadItemImages(c *gin.Context) {
 	return
 }
 
+/*******************************NOT INCLUDED/*******************************/
 func SendImages(c *gin.Context) {
 	response, err := http.Get("https://raw.githubusercontent.com/gin-gonic/logo/master/color.png")
 	if err != nil || response.StatusCode != http.StatusOK {

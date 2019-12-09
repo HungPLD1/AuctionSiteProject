@@ -10,16 +10,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//  @Description Register new Account in JSON form, return a jwt session token in JSON form
-//  @Param userid body string true "username"
-//  @Param password body string true "password"
+//	@Tags Logging Controller
+// 	@Summary Tạo tài khoản mới
+//  @Description Tạo tài khoản mới bằng JSON form, trả về session token nếu thành công.
+//  @Param RegisterInfo body model.RegisterForm true "Resgister Information"
 //  @Success 200 {body} string "Session token"
 //	@Failure 400 {body} string "Error message"
 //	@Failure 500 {body} string "Error message"
 //  @Router /signup [POST]
 func RegisterJSON(c *gin.Context) {
 	db := GetDBInstance().Db
-	var newUser model.UserCommon
+	var newUser model.RegisterForm
 
 	//check if the json form is valid
 	err := c.BindJSON(&newUser)
@@ -72,20 +73,21 @@ func RegisterJSON(c *gin.Context) {
 	passwordHash := string(hash)
 
 	//Filling information in struct
-	newUser = model.UserCommon{
-		UserID:    newUser.UserID,
-		UserName:  "",
-		UserPhone: "",
-		UserGender:    0,
+	newUserform := model.UserCommon{
+		UserID:          newUser.UserID,
+		UserName:        "",
+		UserPhone:       "",
+		UserEmail:       newUser.UserEmail,
+		UserGender:      0,
 		UserAddress:     "",
 		UserPassword:    passwordHash,
 		UserAccessLevel: 1,
-		UserCreateat: time.Now(),
+		UserCreateat:    time.Now(),
 	}
-	UserSessionToken, _ := tokenGenerate(newUser)
+	UserSessionToken, _ := tokenGenerate(newUser.UserID)
 
 	//Save account info to database
-	errInsertDb := db.Table("user_common").Create(newUser).Error
+	errInsertDb := db.Table("user_common").Create(newUserform).Error
 	if errInsertDb != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   errInsertDb,
@@ -99,7 +101,7 @@ func RegisterJSON(c *gin.Context) {
 		ResponseTime: time.Now().String(),
 		Code:         0,
 		Message:      "Đăng kí thành công",
-		Data:         newUser,
+		Data:         newUserform,
 		SessionToken: UserSessionToken,
 	}
 
@@ -107,8 +109,10 @@ func RegisterJSON(c *gin.Context) {
 	return
 }
 
-//  @Description Login by JSON form, return a jwt session token in JSON form
-//  @Param userid body string true "username"
+//	@Tags Logging Controller
+//	@Summary Đăng nhập bằng JSON
+//  @Description Đăng nhập bằng JSON form, trả về session token nếu thành công.
+//  @Param LoginForm body model.LoginForm true "Login Information"
 //  @Param password body string true "password"
 //  @Success 200 {body} string "Session token"
 //	@Failure 400 {body} string "Error message"
@@ -116,7 +120,7 @@ func RegisterJSON(c *gin.Context) {
 //  @Router /login [POST]
 func LoginJSON(c *gin.Context) {
 	//db := GetDBInstance().Db
-	var userLogin model.UserCommon
+	var userLogin model.LoginForm
 
 	err := c.BindJSON(&userLogin)
 	if err != nil {
@@ -142,7 +146,7 @@ func LoginJSON(c *gin.Context) {
 	}
 	//Generate token
 	var token string
-	if token, err = tokenGenerate(userLogin); err != nil {
+	if token, err = tokenGenerate(userLogin.UserID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   err,
 			"message": "Error,cannot create login session!",

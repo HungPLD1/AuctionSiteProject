@@ -10,7 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//  @Description Show user WishList, return a JSON form
+//	@Tags Wishlist Controller
+//  @Summary Hiển thị danh sách đánh dấu session của user
 //  @Param Authorization header string true "Session token"
 //  @Success 200 {object} model.Items
 //	@Failure 400 {body} string "Error message"
@@ -61,14 +62,15 @@ func ShowWishList(c *gin.Context) {
 	return
 }
 
-// @Description Add new item to wishlist, return a JSON message
+//	@Tags Wishlist Controller
+//  @Summary Thêm session vào danh sách đánh dấu của user
 // @Param Authorization header string true "Session token"
 // @Param itemid path string true "Item id to be added to wishlist"
 //  @Success 200 {body} string "Success message"
 //	@Failure 400 {body} string "Error message"
 //	@Failure 401 {body} string "Error message"
 //	@Failure 500 {body} string "Error message"
-//  @Router /wishlist/:id [POST]
+//  @Router /wishlist/:itemid [POST]
 func AddItemToWishList(c *gin.Context) {
 	var headerInfo model.AuthorizationHeader
 	if err := c.ShouldBindHeader(&headerInfo); err != nil {
@@ -91,7 +93,7 @@ func AddItemToWishList(c *gin.Context) {
 	}
 
 	db := GetDBInstance().Db
-	id := c.Param("id")
+	id := c.Param("itemid")
 	//check if the item exist in database
 	if NotExist := db.Table("item").
 		Where("item_id = ?", id).
@@ -124,14 +126,15 @@ func AddItemToWishList(c *gin.Context) {
 	return
 }
 
-// @Description Remove item from wishlist, return a JSON message
+//	@Tags Wishlist Controller
+//  @Summary Xóa session khỏi danh sách đánh dấu
 // @Param Authorization header string true "Session token"
 // @Param itemid path string true "Item id to be removed from wishlist"
 //  @Success 200 {body} string "Success message"
 //	@Failure 400 {body} string "Error message"
 //	@Failure 401 {body} string "Error message"
 //	@Failure 500 {body} string "Error message"
-//  @Router /wishlist/:id [DELETE]
+//  @Router /wishlist/:itemid [DELETE]
 func RemoveItemFromWishList(c *gin.Context) {
 	var headerInfo model.AuthorizationHeader
 	if err := c.ShouldBindHeader(&headerInfo); err != nil {
@@ -154,7 +157,7 @@ func RemoveItemFromWishList(c *gin.Context) {
 	}
 
 	db := GetDBInstance().Db
-	id := c.Param("id")
+	id := c.Param("itemid")
 	//Delete item from wishlist
 	errDelete := db.Table("user_wishlist").
 		Where("item_id = ?", id).

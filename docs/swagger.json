@@ -5,9 +5,57 @@
         "license": {}
     },
     "paths": {
+        "/awaitpayment": {
+            "get": {
+                "description": "Hiển thị phiên đấu giá chưa thanh toán của người dùng. Cần phải đăng nhập để sử dụng. Trả về JSON form",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Hiển thị phiên đấu giá chưa thanh toán",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
         "/categories": {
             "get": {
-                "description": "Search categories by id, return all by default, return a JSON form",
+                "description": "Tìm categories bằng id, nhận id dưới dạng query, trả về toàn bộ tên categories nếu để trống.",
+                "tags": [
+                    "Categories Controller"
+                ],
+                "summary": "Tìm categories bằng id",
                 "parameters": [
                     {
                         "type": "string",
@@ -33,7 +81,10 @@
                 }
             },
             "post": {
-                "description": "Create new Categories, return a JSON message",
+                "tags": [
+                    "Categories Controller"
+                ],
+                "summary": "Tạo Categories mới (Administrator only)",
                 "responses": {
                     "200": {
                         "description": "Success message",
@@ -52,7 +103,11 @@
         },
         "/history/bid": {
             "get": {
-                "description": "Get bid activity/history of user.",
+                "description": "Hiển thị những hoạt động đấu giá của user trên các session.",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Hiển thị lịch sử đấu giá của user.",
                 "parameters": [
                     {
                         "type": "string",
@@ -92,7 +147,10 @@
         },
         "/history/sell": {
             "get": {
-                "description": "Get sell history of user.",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Hiển thị lịch sử bán hàng của user",
                 "parameters": [
                     {
                         "type": "string",
@@ -130,17 +188,64 @@
                 }
             }
         },
-        "/login": {
-            "post": {
-                "description": "Login by JSON form, return a jwt session token in JSON form",
+        "/lock/:sessionid": {
+            "put": {
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Khóa phiên đấu giá (API nội bộ, không public cho user)",
                 "parameters": [
                     {
-                        "description": "username",
-                        "name": "userid",
+                        "type": "string",
+                        "description": "session ID",
+                        "name": "SessionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Đăng nhập bằng JSON form, trả về session token nếu thành công.",
+                "tags": [
+                    "Logging Controller"
+                ],
+                "summary": "Đăng nhập bằng JSON",
+                "parameters": [
+                    {
+                        "description": "Login Information",
+                        "name": "LoginForm",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.LoginForm"
                         }
                     },
                     {
@@ -177,7 +282,11 @@
         },
         "/logs": {
             "post": {
-                "description": "Create a new bidding session , return a JSON message",
+                "description": "Nhận thông tin đấu giá dưới dạng JSON, sau đó kiểm tra quyền đấu giá của user (người dùng không thể ra giá chính phiên của mình). Trả về message JSON thông báo",
+                "tags": [
+                    "Bidding Log Controller"
+                ],
+                "summary": "Ra giá trong một Session",
                 "parameters": [
                     {
                         "type": "string",
@@ -224,9 +333,13 @@
                 }
             }
         },
-        "/logs/:id": {
+        "/logs/:sessionid": {
             "get": {
-                "description": "Get Bid Session Logs by session ID, return a JSON form",
+                "description": "Nhận thông tin session_id dưới dạng Path, sau đó trả về toàn bộ lịch sử đấu giá của id đó.",
+                "tags": [
+                    "Bidding Log Controller"
+                ],
+                "summary": "Lấy lịch sử đấu giá của một Session",
                 "parameters": [
                     {
                         "type": "string",
@@ -254,7 +367,11 @@
         },
         "/logs/last": {
             "delete": {
-                "description": "Delete the last bid log (Administrator only)",
+                "description": "Xóa lần ra giá gần nhất của phiên đấu giá.",
+                "tags": [
+                    "Bidding Log Controller"
+                ],
+                "summary": "Xóa lần ra giá gần nhất (Administrator only)",
                 "parameters": [
                     {
                         "type": "string",
@@ -303,7 +420,10 @@
         },
         "/password": {
             "put": {
-                "description": "Add new item to wishlist, return a JSON message",
+                "tags": [
+                    "User Controller"
+                ],
+                "summary": "Đổi mất khẩu người dùng",
                 "parameters": [
                     {
                         "type": "string",
@@ -313,21 +433,12 @@
                         "required": true
                     },
                     {
-                        "description": "Old Password",
-                        "name": "oldpassword",
+                        "description": "Information to be provided",
+                        "name": "Passwordinfo",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "New Password",
-                        "name": "newpassword",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.ModifyPassword"
                         }
                     }
                 ],
@@ -361,7 +472,10 @@
         },
         "/profile": {
             "get": {
-                "description": "Show user profile, return user general profile in JSON form",
+                "tags": [
+                    "User Controller"
+                ],
+                "summary": "Hiển thị thông tin cá nhân người dùng",
                 "parameters": [
                     {
                         "type": "string",
@@ -399,7 +513,10 @@
                 }
             },
             "put": {
-                "description": "Modify/Update user profile, return message in JSON form",
+                "tags": [
+                    "User Controller"
+                ],
+                "summary": "Thay đổi thông tin cá nhân người dùng",
                 "parameters": [
                     {
                         "type": "string",
@@ -437,9 +554,116 @@
                 }
             }
         },
-        "/review/:id": {
+        "/review": {
+            "post": {
+                "description": "Tạo review từ user đến user khác. Review phải được đính với id session đấu già mà user đó thắng. Mỗi id session chỉ có duy nhất 1 review. Một user không thể review chính bản thân mình.",
+                "tags": [
+                    "Review Controller"
+                ],
+                "summary": "Tạo review mới",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Information to be provided",
+                        "name": "NewSessionInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.NewReview"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
+        "/review/:sessionid": {
+            "delete": {
+                "tags": [
+                    "Review Controller"
+                ],
+                "summary": "Xóa review của user dựa theo session id (administrator only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID session",
+                        "name": "sessionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "400": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "401": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    },
+                    "500": {
+                        "description": "Error message",
+                        "schema": {
+                            "type": "body"
+                        }
+                    }
+                }
+            }
+        },
+        "/review/:userid": {
             "get": {
-                "description": "Show review of User by User ID, return a JSON form",
+                "description": "Lấy review bằng userid dưới dạng path, trả về form JSON.",
+                "tags": [
+                    "Review Controller"
+                ],
+                "summary": "Lấy review bằng userid",
                 "parameters": [
                     {
                         "type": "string",
@@ -467,7 +691,11 @@
         },
         "/session": {
             "get": {
-                "description": "Search Session by query, return a JSON form",
+                "description": "Tìm phiên đấu giá bằng tên mặt hàng và/hoặc categories. Tên mặt hàng không cần viết đầy đủ. Trả về tất cả nếu để trống. Trả về JSON form",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Tìm phiên đấu giá bằng tên mặt hàng và/hoặc categories",
                 "parameters": [
                     {
                         "type": "string",
@@ -500,7 +728,10 @@
                 }
             },
             "put": {
-                "description": "Update session information, return a JSON message",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Thay đổi thông tin phiên đấu giá.",
                 "parameters": [
                     {
                         "type": "string",
@@ -547,7 +778,10 @@
                 }
             },
             "post": {
-                "description": "Create a new bidding session , return a JSON message",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Tạo phiên đấu giá mới",
                 "parameters": [
                     {
                         "type": "string",
@@ -562,7 +796,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SessionSearch"
+                            "$ref": "#/definitions/model.NewSession"
                         }
                     }
                 ],
@@ -594,9 +828,13 @@
                 }
             }
         },
-        "/session/:id": {
+        "/session/:sessionid": {
             "get": {
-                "description": "Show Session information by ID, return a JSON form",
+                "description": "Tìm phiên đáu giá bằng id dưới dạng path, trả về JSON form",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Tìm phiên đấu giá bằng id",
                 "parameters": [
                     {
                         "type": "string",
@@ -622,7 +860,11 @@
                 }
             },
             "delete": {
-                "description": "Delete bid session (Administrator only)",
+                "description": "Xóa toàn bộ phiên đấu giá và các dữ liệu liên quan như lịch sử đấu giá, thông tin mặt hàng của phiên đấu giá.",
+                "tags": [
+                    "BidSession Controller"
+                ],
+                "summary": "Xóa phiên đấu giá (Administrator only)",
                 "parameters": [
                     {
                         "type": "string",
@@ -669,24 +911,19 @@
         },
         "/signup": {
             "post": {
-                "description": "Register new Account in JSON form, return a jwt session token in JSON form",
+                "description": "Tạo tài khoản mới bằng JSON form, trả về session token nếu thành công.",
+                "tags": [
+                    "Logging Controller"
+                ],
+                "summary": "Tạo tài khoản mới",
                 "parameters": [
                     {
-                        "description": "username",
-                        "name": "userid",
+                        "description": "Resgister Information",
+                        "name": "RegisterInfo",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "password",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.RegisterForm"
                         }
                     }
                 ],
@@ -761,7 +998,10 @@
         },
         "/wishlist": {
             "get": {
-                "description": "Show user WishList, return a JSON form",
+                "tags": [
+                    "Wishlist Controller"
+                ],
+                "summary": "Hiển thị danh sách đánh dấu session của user",
                 "parameters": [
                     {
                         "type": "string",
@@ -799,9 +1039,12 @@
                 }
             }
         },
-        "/wishlist/:id": {
+        "/wishlist/:itemid": {
             "post": {
-                "description": "Add new item to wishlist, return a JSON message",
+                "tags": [
+                    "Wishlist Controller"
+                ],
+                "summary": "Thêm session vào danh sách đánh dấu của user",
                 "parameters": [
                     {
                         "type": "string",
@@ -846,7 +1089,10 @@
                 }
             },
             "delete": {
-                "description": "Remove item from wishlist, return a JSON message",
+                "tags": [
+                    "Wishlist Controller"
+                ],
+                "summary": "Xóa session khỏi danh sách đánh dấu",
                 "parameters": [
                     {
                         "type": "string",
@@ -991,6 +1237,36 @@
                 }
             }
         },
+        "model.LoginForm": {
+            "type": "object",
+            "required": [
+                "password",
+                "userid"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.ModifyPassword": {
+            "type": "object",
+            "required": [
+                "newpassword",
+                "oldpassword"
+            ],
+            "properties": {
+                "newpassword": {
+                    "type": "string"
+                },
+                "oldpassword": {
+                    "type": "string"
+                }
+            }
+        },
         "model.NewBidLog": {
             "type": "object",
             "required": [
@@ -1003,6 +1279,91 @@
                 },
                 "sessionid": {
                     "type": "integer"
+                }
+            }
+        },
+        "model.NewReview": {
+            "type": "object",
+            "required": [
+                "reviewcontent",
+                "reviewscore",
+                "sessionid",
+                "usertargetid"
+            ],
+            "properties": {
+                "reviewcontent": {
+                    "type": "string"
+                },
+                "reviewscore": {
+                    "type": "integer"
+                },
+                "sessionid": {
+                    "type": "integer"
+                },
+                "usertargetid": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NewSession": {
+            "type": "object",
+            "required": [
+                "categoriesid",
+                "itemcondition",
+                "itemdescription",
+                "itemname",
+                "minimumincreasebid",
+                "startprice"
+            ],
+            "properties": {
+                "categoriesid": {
+                    "type": "integer"
+                },
+                "enddate": {
+                    "type": "string"
+                },
+                "imagelink": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "itemcondition": {
+                    "type": "string"
+                },
+                "itemdescription": {
+                    "type": "string"
+                },
+                "itemname": {
+                    "type": "string"
+                },
+                "minimumincreasebid": {
+                    "type": "integer"
+                },
+                "startdate": {
+                    "type": "string"
+                },
+                "startprice": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.RegisterForm": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "userid"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
                 }
             }
         },
@@ -1090,6 +1451,9 @@
                 },
                 "sessionid": {
                     "type": "integer"
+                },
+                "sessionstatus": {
+                    "type": "string"
                 },
                 "startdate": {
                     "type": "string"

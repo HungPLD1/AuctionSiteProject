@@ -8,7 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//  @Description Search categories by id, return all by default, return a JSON form
+//	@Tags Categories Controller
+//  @Summary Tìm categories bằng id
+//	@Description Tìm categories bằng id, nhận id dưới dạng query, trả về toàn bộ tên categories nếu để trống.
 //  @Param id query string true "id of categories, if empty then return all"
 //  @Success 200 {object} model.Categories
 //	@Failure 500 {body} string "Error message"
@@ -35,11 +37,45 @@ func SearchCategories(c *gin.Context) {
 	return
 }
 
-//  @Description Create new Categories, return a JSON message
+//	@Tags Categories Controller
+//	@Summary Tạo Categories mới (Administrator only)
 //  @Success 200 {body} string "Success message"
 //	@Failure 500 {body} string "Error message"
 //  @Router /categories [POST]
 func NewCategories(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	//check if user are adminitrator
+	if check, err := checkAdministrator(userID); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   err,
+			"message": "Error while fetching user data",
+		})
+		return
+	} else if check == false {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Only Administrator can use this API!",
+		})
+		return
+	}
+
 	db := GetDBInstance().Db
 	var categories model.Categories
 	errJSON := c.BindJSON(&categories)

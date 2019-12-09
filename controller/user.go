@@ -9,7 +9,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//  @Description Show user profile, return user general profile in JSON form
+//	@Tags User Controller
+//	@Summary Hiển thị thông tin cá nhân người dùng
 //  @Param Authorization header string true "Session token"
 //  @Success 200 {object} model.UserCommon
 //	@Failure 400 {body} string "Error message"
@@ -56,7 +57,8 @@ func UserProfile(c *gin.Context) {
 	return
 }
 
-//  @Description Modify/Update user profile, return message in JSON form
+//	@Tags User Controller
+//	@Summary Thay đổi thông tin cá nhân người dùng
 //  @Param Authorization header string true "Session token"
 //  @Success 200 {body} string "Success message"
 //	@Failure 400 {body} string "Error message"
@@ -116,10 +118,10 @@ func UserProfileUpdate(c *gin.Context) {
 	return
 }
 
-// @Description Add new item to wishlist, return a JSON message
+//	@Tags User Controller
+// @Summary Đổi mất khẩu người dùng
 // @Param Authorization header string true "Session token"
-// @Param oldpassword body string true "Old Password"
-// @Param newpassword body string true "New Password"
+//  @Param Passwordinfo body model.ModifyPassword true "Information to be provided"
 //  @Success 200 {body} string "Success message"
 //	@Failure 400 {body} string "Error message"
 //	@Failure 401 {body} string "Error message"

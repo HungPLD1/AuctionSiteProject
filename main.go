@@ -41,14 +41,16 @@ func main() {
 	})
 
 	router.GET("/categories", controller.SearchCategories)
-	router.POST("/categories", controller.NewCategories)
+	router.POST("/categories", jwt.Auth(model.SecretKey), controller.NewCategories)
 
-	router.GET("/session/:id", controller.BidSessionByID)
+	router.GET("/session/:sessionid", controller.BidSessionByID)
 	router.GET("/session", controller.BidSessionByQuery)
 	router.POST("/session", jwt.Auth(model.SecretKey), controller.CreateBidSession)
 	router.PUT("/session", jwt.Auth(model.SecretKey), controller.UpdateBidSession)
+	router.GET("/awaitpayment", jwt.Auth(model.SecretKey), controller.UnpaidSession)
+	router.PUT("lock/:sessionid", controller.LockSession)
 
-	router.GET("/logs/:id", controller.BidLogs)
+	router.GET("/logs/:sessionid", controller.BidLogs)
 	router.POST("/logs", jwt.Auth(model.SecretKey), controller.NewBid)
 
 	router.GET("/history/bid", jwt.Auth(model.SecretKey), controller.BidSessionHistory)
@@ -61,17 +63,19 @@ func main() {
 	router.PUT("/password", jwt.Auth(model.SecretKey), controller.UpdatePassword)
 
 	router.GET("/wishlist", jwt.Auth(model.SecretKey), controller.ShowWishList)
-	router.POST("/wishlist/:id", jwt.Auth(model.SecretKey), controller.AddItemToWishList)
-	router.DELETE("/wishlist/:id", jwt.Auth(model.SecretKey), controller.RemoveItemFromWishList)
+	router.POST("/wishlist/:itemid", jwt.Auth(model.SecretKey), controller.AddItemToWishList)
+	router.DELETE("/wishlist/:itemid", jwt.Auth(model.SecretKey), controller.RemoveItemFromWishList)
 
-	router.GET("/review/:id", controller.ShowReview)
+	router.GET("/review/:userid", controller.ShowReview)
+	router.POST("/review", jwt.Auth(model.SecretKey), controller.CreateReview)
 
-	router.POST("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages)
-	router.GET("/upload", controller.SendImages)
+	//router.POST("/upload", jwt.Auth(model.SecretKey), controller.UploadItemImages)
+	//router.GET("/upload", controller.SendImages)
 
 	//ADMIN ONLY
-	router.DELETE("/session/:id", jwt.Auth(model.SecretKey), controller.DeleteBidSession)
+	router.DELETE("/session/:sessionid", jwt.Auth(model.SecretKey), controller.DeleteBidSession)
 	router.DELETE("/logs/last", jwt.Auth(model.SecretKey), controller.DeleteLastBidLogs)
+	router.DELETE("/review/:sessionid", jwt.Auth(model.SecretKey), controller.DeleteReview)
 
 	router.Run(":8080")
 }

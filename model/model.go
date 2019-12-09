@@ -33,6 +33,7 @@ type SessionSearch struct {
 	SellerName         string          `gorm:"type:varchar(100)" json:"sellername"`
 	CurrentBid         int             `gorm:"type:bigint(20)" json:"currentbid" binding:"required"`
 	BidLogs            []BidSessionLog `json:"biddingLog"`
+	SessionStatus      string          `gorm:"type:varchar30" json:"sessionstatus"`
 }
 
 //Items ...Used by gorm and json
@@ -82,6 +83,7 @@ type BidSession struct {
 	WinnerID           string    `gorm:"type:varchar(255)" json:"winnerid"`
 	MinimumIncreaseBid int       `gorm:"type:int(11)" json:"minimumbid"`
 	CurrentBid         int       `gorm:"type:bigint(20)" json:"currentbid"`
+	SessionStatus      string    `gorm:"type:varchar(30)" json:"status"`
 }
 
 //BidSessionLog ...Used by gorm and json
@@ -135,12 +137,25 @@ type ModifyPassword struct {
 	NewPassword string `json:"newpassword" binding:"required"`
 }
 
+//NewSession ...Used by controller.CreateBidSession
+type NewSession struct {
+	ItemName           string   `json:"itemname" binding:"required"`
+	ItemDescription    string   `json:"itemdescription" binding:"required"`
+	ItemCondition      string   `json:"itemcondition" binding:"required"`
+	SessionStartDate   string   `json:"startdate"`
+	SessionEndDate     string   `json:"enddate"`
+	StartPrice         int      `json:"startprice" binding:"required"`
+	MinimumIncreaseBid int      `json:"minimumincreasebid" binding:"required"`
+	Images             []string `json:"imagelink"`
+	CategoriesID       int      `json:"categoriesid" binding:"required"`
+}
+
 //UpdateSession ...Used by controller.UpdateBidSession
 type UpdateSession struct {
-	SessionID		   int			   `json:"sessionid" binding:"required"`
-	ItemName           string          `json:"itemname"`
-	ItemDescription    string          `json:"itemdescription"`
-	ItemCondition      string          `json:"itemcondition"`
+	SessionID       int    `json:"sessionid" binding:"required"`
+	ItemName        string `json:"itemname"`
+	ItemDescription string `json:"itemdescription"`
+	ItemCondition   string `json:"itemcondition"`
 	//Images             []string        `json:"imagelink"`
 }
 
@@ -172,10 +187,31 @@ type SellHistory struct {
 	SessionEndDate   time.Time `json:"sessionenddate"`
 }
 
-//Deletelastlog ...User by controller.DeleteBidLogs
+//Deletelastlog ...Used by controller.DeleteBidLogs
 type Deletelastlog struct {
 	SessionID int    ` json:"sessionid" binding:"required"`
 	UserID    string `json:"userid" binding:"required"`
+}
+
+//NewReview ...Used by controller.CreateReview
+type NewReview struct {
+	UserTarget	string	`json:"usertargetid" binding:"required"`
+	SessionID 	int `json:"sessionid" binding:"required"`
+	ReviewContent string `json:"reviewcontent" binding:"required"`
+	ReviewScore int `json:"reviewscore" binding:"required"`
+}
+
+//Register ...Used by controller.RegisterJSON
+type RegisterForm struct {
+	UserID       string `json:"userid" binding:"required"`
+	UserPassword string `json:"password" binding:"required"`
+	UserEmail    string `json:"email" binding:"required"`
+}
+
+//LoginForm ...Used by controller.LoginJSON
+type LoginForm struct {
+	UserID       string `json:"userid" binding:"required"`
+	UserPassword string `json:"password" binding:"required"`
 }
 
 //Config ...Database login info

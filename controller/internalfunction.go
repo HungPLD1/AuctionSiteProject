@@ -12,7 +12,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const administrator int = 9
+const (
+	administrator int = 9
+	RUNNING string = "RUNNING"
+	AWAITINGPAYMENT string = "AWAITING PAYMENT"
+	FINISHED string = "FINISHED"
+	CANCELLED string = "CANCELLED"
+)
 
 /**********************************************************************/
 /**************************INTERNAL FUNCTIONS**************************/
@@ -53,7 +59,7 @@ func checkUserPassword(userName string, userPassword string) (bool, error) {
 *	First check if the username exist, then compare the password.
 *	Return true if data are matched, false otherwise.
 **/
-func validLoginInfo(userLogin model.UserCommon) (bool, error) {
+func validLoginInfo(userLogin model.LoginForm) (bool, error) {
 	//Check username
 	var userCheck, passCheck bool
 	var err error
@@ -71,13 +77,13 @@ func validLoginInfo(userLogin model.UserCommon) (bool, error) {
 *	Generate a jwt token string to save the login session.
 *	Return string: the jwt token, error: Error when generating the token.
 **/
-func tokenGenerate(user model.UserCommon) (string, error) {
+func tokenGenerate(userid string) (string, error) {
 	token := jwt_lib.New(jwt_lib.GetSigningMethod("HS256"))
 
 	token.Claims = jwt_lib.MapClaims{
-		"userId": user.UserID,
-		"Role":   user.UserAccessLevel,
-		"exp":    time.Now().Add(time.Hour * 24).Unix(),
+		"userId": userid,
+		//"Role":   user.UserAccessLevel,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 	return token.SignedString([]byte(model.SecretKey))
 }
@@ -150,7 +156,7 @@ func searchSessionSQL() *gorm.DB {
 		Joins("JOIN item ON item.item_id = bid_session.item_id").
 		Joins("JOIN user_common ON user_common.user_id = bid_session.seller_id").
 		Joins("JOIN categories ON categories.categories_id = item.categories_id").
-		Select("bid_session.session_id, bid_session.item_id, bid_session.session_start_date, bid_session.session_end_date, bid_session.minimum_increase_bid, bid_session.seller_id, bid_session.current_bid, item.item_name, item.item_description, user_common.user_name AS seller_name, categories.categories_name")
+		Select("bid_session.session_id, bid_session.item_id, bid_session.session_start_date, bid_session.session_end_date, bid_session.minimum_increase_bid, bid_session.seller_id, bid_session.current_bid, bid_session.session_status, item.item_name, item.item_description, user_common.user_name AS seller_name, categories.categories_name")
 }
 
 /** Attach the bidding log data to session model */

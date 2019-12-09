@@ -77,7 +77,7 @@ docs/
 
 
 ## Cài đặt
-1. Kéo thư mục về máy
+1.Từ thư mục làm việc kéo repositories về
 ```sh
 $ git clone https://github.com/Velverto/AuctionSiteProject
 ```
@@ -95,7 +95,12 @@ $ go get -u github.com/json-iterator/go
 $ go get -u golang.org/x/crypto/bcrypt
 ```
 
-3. Khởi chạy swagger
+3. Vào thư mục AuctionSiteProject
+```sh
+$ cd AuctionSiteProject
+```
+
+4. Khởi chạy swagger
 ```sh
 $ swag init
 ```
@@ -104,7 +109,7 @@ $ swag init
   $ ./swag init
   ```
   
-4. Khởi động server
+5. Khởi động server
 ```sh
 $ go run main.go
 ```

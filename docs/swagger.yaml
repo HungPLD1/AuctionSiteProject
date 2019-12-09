@@ -63,6 +63,26 @@ definitions:
       itemname:
         type: string
     type: object
+  model.LoginForm:
+    properties:
+      password:
+        type: string
+      userid:
+        type: string
+    required:
+    - password
+    - userid
+    type: object
+  model.ModifyPassword:
+    properties:
+      newpassword:
+        type: string
+      oldpassword:
+        type: string
+    required:
+    - newpassword
+    - oldpassword
+    type: object
   model.NewBidLog:
     properties:
       amount:
@@ -72,6 +92,65 @@ definitions:
     required:
     - amount
     - sessionid
+    type: object
+  model.NewReview:
+    properties:
+      reviewcontent:
+        type: string
+      reviewscore:
+        type: integer
+      sessionid:
+        type: integer
+      usertargetid:
+        type: string
+    required:
+    - reviewcontent
+    - reviewscore
+    - sessionid
+    - usertargetid
+    type: object
+  model.NewSession:
+    properties:
+      categoriesid:
+        type: integer
+      enddate:
+        type: string
+      imagelink:
+        items:
+          type: string
+        type: array
+      itemcondition:
+        type: string
+      itemdescription:
+        type: string
+      itemname:
+        type: string
+      minimumincreasebid:
+        type: integer
+      startdate:
+        type: string
+      startprice:
+        type: integer
+    required:
+    - categoriesid
+    - itemcondition
+    - itemdescription
+    - itemname
+    - minimumincreasebid
+    - startprice
+    type: object
+  model.RegisterForm:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      userid:
+        type: string
+    required:
+    - email
+    - password
+    - userid
     type: object
   model.SellHistory:
     properties:
@@ -124,6 +203,8 @@ definitions:
         type: string
       sessionid:
         type: integer
+      sessionstatus:
+        type: string
       startdate:
         type: string
       viewcount:
@@ -189,9 +270,40 @@ info:
   contact: {}
   license: {}
 paths:
+  /awaitpayment:
+    get:
+      description: Hiển thị phiên đấu giá chưa thanh toán của người dùng. Cần phải
+        đăng nhập để sử dụng. Trả về JSON form
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+      summary: Hiển thị phiên đấu giá chưa thanh toán
+      tags:
+      - BidSession Controller
   /categories:
     get:
-      description: Search categories by id, return all by default, return a JSON form
+      description: Tìm categories bằng id, nhận id dưới dạng query, trả về toàn bộ
+        tên categories nếu để trống.
       parameters:
       - description: id of categories, if empty then return all
         in: query
@@ -207,8 +319,10 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Tìm categories bằng id
+      tags:
+      - Categories Controller
     post:
-      description: Create new Categories, return a JSON message
       responses:
         "200":
           description: Success message
@@ -218,9 +332,12 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Tạo Categories mới (Administrator only)
+      tags:
+      - Categories Controller
   /history/bid:
     get:
-      description: Get bid activity/history of user.
+      description: Hiển thị những hoạt động đấu giá của user trên các session.
       parameters:
       - description: Session token
         in: header
@@ -244,9 +361,11 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Hiển thị lịch sử đấu giá của user.
+      tags:
+      - BidSession Controller
   /history/sell:
     get:
-      description: Get sell history of user.
       parameters:
       - description: Session token
         in: header
@@ -270,16 +389,47 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Hiển thị lịch sử bán hàng của user
+      tags:
+      - BidSession Controller
+  /lock/:sessionid:
+    put:
+      parameters:
+      - description: session ID
+        in: path
+        name: SessionID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+      summary: Khóa phiên đấu giá (API nội bộ, không public cho user)
+      tags:
+      - BidSession Controller
   /login:
     post:
-      description: Login by JSON form, return a jwt session token in JSON form
+      description: Đăng nhập bằng JSON form, trả về session token nếu thành công.
       parameters:
-      - description: username
+      - description: Login Information
         in: body
-        name: userid
+        name: LoginForm
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/model.LoginForm'
       - description: password
         in: body
         name: password
@@ -299,9 +449,14 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Đăng nhập bằng JSON
+      tags:
+      - Logging Controller
   /logs:
     post:
-      description: Create a new bidding session , return a JSON message
+      description: Nhận thông tin đấu giá dưới dạng JSON, sau đó kiểm tra quyền đấu
+        giá của user (người dùng không thể ra giá chính phiên của mình). Trả về message
+        JSON thông báo
       parameters:
       - description: Session token
         in: header
@@ -331,9 +486,13 @@ paths:
           description: Error message
           schema:
             type: body
-  /logs/:id:
+      summary: Ra giá trong một Session
+      tags:
+      - Bidding Log Controller
+  /logs/:sessionid:
     get:
-      description: Get Bid Session Logs by session ID, return a JSON form
+      description: Nhận thông tin session_id dưới dạng Path, sau đó trả về toàn bộ
+        lịch sử đấu giá của id đó.
       parameters:
       - description: Session id
         in: path
@@ -349,9 +508,12 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Lấy lịch sử đấu giá của một Session
+      tags:
+      - Bidding Log Controller
   /logs/last:
     delete:
-      description: Delete the last bid log (Administrator only)
+      description: Xóa lần ra giá gần nhất của phiên đấu giá.
       parameters:
       - description: Session token
         in: header
@@ -381,27 +543,23 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Xóa lần ra giá gần nhất (Administrator only)
+      tags:
+      - Bidding Log Controller
   /password:
     put:
-      description: Add new item to wishlist, return a JSON message
       parameters:
       - description: Session token
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Old Password
+      - description: Information to be provided
         in: body
-        name: oldpassword
+        name: Passwordinfo
         required: true
         schema:
-          type: string
-      - description: New Password
-        in: body
-        name: newpassword
-        required: true
-        schema:
-          type: string
+          $ref: '#/definitions/model.ModifyPassword'
       responses:
         "200":
           description: Success message
@@ -419,9 +577,11 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Đổi mất khẩu người dùng
+      tags:
+      - User Controller
   /profile:
     get:
-      description: Show user profile, return user general profile in JSON form
       parameters:
       - description: Session token
         in: header
@@ -445,8 +605,10 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Hiển thị thông tin cá nhân người dùng
+      tags:
+      - User Controller
     put:
-      description: Modify/Update user profile, return message in JSON form
       parameters:
       - description: Session token
         in: header
@@ -470,9 +632,82 @@ paths:
           description: Error message
           schema:
             type: body
-  /review/:id:
+      summary: Thay đổi thông tin cá nhân người dùng
+      tags:
+      - User Controller
+  /review:
+    post:
+      description: Tạo review từ user đến user khác. Review phải được đính với id
+        session đấu già mà user đó thắng. Mỗi id session chỉ có duy nhất 1 review.
+        Một user không thể review chính bản thân mình.
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Information to be provided
+        in: body
+        name: NewSessionInfo
+        required: true
+        schema:
+          $ref: '#/definitions/model.NewReview'
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+      summary: Tạo review mới
+      tags:
+      - Review Controller
+  /review/:sessionid:
+    delete:
+      parameters:
+      - description: Session token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID session
+        in: path
+        name: sessionID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success message
+          schema:
+            type: body
+        "400":
+          description: Error message
+          schema:
+            type: body
+        "401":
+          description: Error message
+          schema:
+            type: body
+        "500":
+          description: Error message
+          schema:
+            type: body
+      summary: Xóa review của user dựa theo session id (administrator only)
+      tags:
+      - Review Controller
+  /review/:userid:
     get:
-      description: Show review of User by User ID, return a JSON form
+      description: Lấy review bằng userid dưới dạng path, trả về form JSON.
       parameters:
       - description: User id
         in: path
@@ -488,9 +723,13 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Lấy review bằng userid
+      tags:
+      - Review Controller
   /session:
     get:
-      description: Search Session by query, return a JSON form
+      description: Tìm phiên đấu giá bằng tên mặt hàng và/hoặc categories. Tên mặt
+        hàng không cần viết đầy đủ. Trả về tất cả nếu để trống. Trả về JSON form
       parameters:
       - description: Name of the item (or part of it)
         in: query
@@ -511,8 +750,10 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Tìm phiên đấu giá bằng tên mặt hàng và/hoặc categories
+      tags:
+      - BidSession Controller
     post:
-      description: Create a new bidding session , return a JSON message
       parameters:
       - description: Session token
         in: header
@@ -524,7 +765,7 @@ paths:
         name: NewSessionInfo
         required: true
         schema:
-          $ref: '#/definitions/model.SessionSearch'
+          $ref: '#/definitions/model.NewSession'
       responses:
         "200":
           description: Success message
@@ -542,8 +783,10 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Tạo phiên đấu giá mới
+      tags:
+      - BidSession Controller
     put:
-      description: Update session information, return a JSON message
       parameters:
       - description: Session token
         in: header
@@ -573,9 +816,13 @@ paths:
           description: Error message
           schema:
             type: body
-  /session/:id:
+      summary: Thay đổi thông tin phiên đấu giá.
+      tags:
+      - BidSession Controller
+  /session/:sessionid:
     delete:
-      description: Delete bid session (Administrator only)
+      description: Xóa toàn bộ phiên đấu giá và các dữ liệu liên quan như lịch sử
+        đấu giá, thông tin mặt hàng của phiên đấu giá.
       parameters:
       - description: Session token
         in: header
@@ -604,8 +851,11 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Xóa phiên đấu giá (Administrator only)
+      tags:
+      - BidSession Controller
     get:
-      description: Show Session information by ID, return a JSON form
+      description: Tìm phiên đáu giá bằng id dưới dạng path, trả về JSON form
       parameters:
       - description: Session id
         in: path
@@ -621,23 +871,20 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Tìm phiên đấu giá bằng id
+      tags:
+      - BidSession Controller
   /signup:
     post:
-      description: Register new Account in JSON form, return a jwt session token in
-        JSON form
+      description: Tạo tài khoản mới bằng JSON form, trả về session token nếu thành
+        công.
       parameters:
-      - description: username
+      - description: Resgister Information
         in: body
-        name: userid
+        name: RegisterInfo
         required: true
         schema:
-          type: string
-      - description: password
-        in: body
-        name: password
-        required: true
-        schema:
-          type: string
+          $ref: '#/definitions/model.RegisterForm'
       responses:
         "200":
           description: Session token
@@ -651,6 +898,9 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Tạo tài khoản mới
+      tags:
+      - Logging Controller
   /upload:
     post:
       description: Upload one or multiples photos of item , return a JSON message
@@ -684,7 +934,6 @@ paths:
             type: body
   /wishlist:
     get:
-      description: Show user WishList, return a JSON form
       parameters:
       - description: Session token
         in: header
@@ -708,9 +957,11 @@ paths:
           description: Error message
           schema:
             type: body
-  /wishlist/:id:
+      summary: Hiển thị danh sách đánh dấu session của user
+      tags:
+      - Wishlist Controller
+  /wishlist/:itemid:
     delete:
-      description: Remove item from wishlist, return a JSON message
       parameters:
       - description: Session token
         in: header
@@ -739,8 +990,10 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Xóa session khỏi danh sách đánh dấu
+      tags:
+      - Wishlist Controller
     post:
-      description: Add new item to wishlist, return a JSON message
       parameters:
       - description: Session token
         in: header
@@ -769,4 +1022,7 @@ paths:
           description: Error message
           schema:
             type: body
+      summary: Thêm session vào danh sách đánh dấu của user
+      tags:
+      - Wishlist Controller
 swagger: "2.0"

@@ -10,13 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//  @Description Show Session information by ID, return a JSON form
+//	@Tags BidSession Controller
+//	@Summary Tìm phiên đấu giá bằng id
+//  @Description Tìm phiên đáu giá bằng id dưới dạng path, trả về JSON form
 //	@Param id path string true "Session id"
 //  @Success 200 {object} model.SessionSearch
 //	@Failure 500 {body} string "Error message"
-//  @Router /session/:id [GET]
+//  @Router /session/:sessionid [GET]
 func BidSessionByID(c *gin.Context) {
-	sessionid := c.Param("id")
+	sessionid := c.Param("sessionid")
 	var session model.SessionSearch
 
 	errGetSession := searchSessionSQL().
@@ -38,7 +40,9 @@ func BidSessionByID(c *gin.Context) {
 	return
 }
 
-//  @Description Search Session by query, return a JSON form
+//	@Tags BidSession Controller
+//	@Summary Tìm phiên đấu giá bằng tên mặt hàng và/hoặc categories
+//  @Description Tìm phiên đấu giá bằng tên mặt hàng và/hoặc categories. Tên mặt hàng không cần viết đầy đủ. Trả về tất cả nếu để trống. Trả về JSON form
 //  @Param name query string true "Name of the item (or part of it)"
 // 	@Param categories query string true "Item Categories by number"
 //  @Success 200 {object} model.SessionSearch
@@ -68,9 +72,59 @@ func BidSessionByQuery(c *gin.Context) {
 	return
 }
 
-//  @Description Create a new bidding session , return a JSON message
+//	@Tags BidSession Controller
+//	@Summary Hiển thị phiên đấu giá chưa thanh toán
+//  @Description Hiển thị phiên đấu giá chưa thanh toán của người dùng. Cần phải đăng nhập để sử dụng. Trả về JSON form
 //  @Param Authorization header string true "Session token"
-//  @Param NewSessionInfo body model.SessionSearch true "Information to be provided"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /awaitpayment [GET]
+func UnpaidSession(c *gin.Context) {
+	var headerInfo model.AuthorizationHeader
+	if err := c.ShouldBindHeader(&headerInfo); err != nil {
+		c.JSON(200, err)
+	}
+	var userID string
+	var errtoken error
+	if userID, errtoken = checkSessionToken(headerInfo.Token); errtoken != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   errtoken,
+			"message": "Bad request",
+		})
+		return
+	} else if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Token không hợp lệ",
+		})
+		return
+	}
+	var sessionlist []model.SessionSearch
+	errGetSession := searchSessionSQL().
+		Where("bid_session.winner_id = ? AND bid_session.session_status = ?", userID, AWAITINGPAYMENT).
+		Scan(&sessionlist).
+		Error
+	if errGetSession != nil {
+		log.Println(errGetSession)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   errGetSession,
+			"message": "Error while fetching session data",
+		})
+		return
+	}
+	for i, _ := range sessionlist {
+		sessionlist[i].BidLogs = attachSessionLogs(sessionlist[i])
+		sessionlist[i].Images = attachSessionImages(sessionlist[i].ItemID, sessionlist[i].Images)
+	}
+	c.JSON(200, sessionlist)
+	return
+}
+
+//	@Tags BidSession Controller
+//	@Summary Tạo phiên đấu giá mới
+//  @Param Authorization header string true "Session token"
+//  @Param NewSessionInfo body model.NewSession true "Information to be provided"
 //  @Success 200 {body} string "Success message"
 //	@Failure 400 {body} string "Error message"
 //	@Failure 401 {body} string "Error message"
@@ -96,7 +150,7 @@ func CreateBidSession(c *gin.Context) {
 		return
 	}
 
-	var newsession model.SessionSearch
+	var newsession model.NewSession
 	errJSON := c.BindJSON(&newsession)
 	if errJSON != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -105,7 +159,7 @@ func CreateBidSession(c *gin.Context) {
 		})
 		return
 	}
-
+	//create item
 	item := model.Items{
 		CategoriesID:    newsession.CategoriesID,
 		ItemName:        newsession.ItemName,
@@ -132,17 +186,45 @@ func CreateBidSession(c *gin.Context) {
 		})
 		return
 	}
-	session := model.BidSession{
-		ItemID:   itemID[0],
-		SellerID: userID,
-		//SessionStartDate:   newsession.SessionStartDate,
-		//SessionEndDate:     newsession.SessionEndDate,
-		SessionStartDate:   time.Now(),
-		SessionEndDate:     time.Now().Add(time.Hour * 24),
-		UserviewCount:      1,
-		MinimumIncreaseBid: newsession.MinimumIncreaseBid,
-		CurrentBid:         newsession.CurrentBid,
+
+	//add image Url
+	for _, image := range newsession.Images {
+		newimage := model.ItemImage{
+			ItemID: itemID[0],
+			Images: image,
+		}
+		if err := db.Table("item_image").Create(newimage).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   err,
+				"message": "Cannot add image link to database",
+			})
+			return
+		}
 	}
+
+	//create session
+
+	session := model.BidSession{
+		ItemID:             itemID[0],
+		SellerID:           userID,
+		UserviewCount:      1,
+		WinnerID:           userID,
+		MinimumIncreaseBid: newsession.MinimumIncreaseBid,
+		CurrentBid:         newsession.StartPrice,
+		SessionStatus:      RUNNING,
+	}
+	var errtime error
+	session.SessionStartDate, errtime = time.Parse(time.RFC3339, newsession.SessionStartDate)
+	if errtime != nil {
+		log.Println(errtime)
+	}
+	session.SessionEndDate, errtime = time.Parse(time.RFC3339, newsession.SessionEndDate)
+	if errtime != nil {
+		log.Println(errtime)
+	}
+	log.Println(newsession.SessionStartDate, newsession.SessionEndDate)
+	log.Println(session.SessionStartDate, session.SessionEndDate)
+
 	if err := db.Table("bid_session").Create(session).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   err,
@@ -154,7 +236,8 @@ func CreateBidSession(c *gin.Context) {
 	return
 }
 
-//  @Description Update session information, return a JSON message
+//	@Tags BidSession Controller
+//	@Summary Thay đổi thông tin phiên đấu giá.
 //  @Param Authorization header string true "Session token"
 //  @Param NewSessionInfo body model.UpdateSession true "Information to be provided"
 //  @Success 200 {body} string "Success message"
@@ -238,14 +321,55 @@ func UpdateBidSession(c *gin.Context) {
 	return
 }
 
-//  @Description Delete bid session (Administrator only)
+//	@Tags BidSession Controller
+//	@Summary Khóa phiên đấu giá (API nội bộ, không public cho user)
+//  @Param SessionID path string true "session ID"
+//  @Success 200 {body} string "Success message"
+//	@Failure 400 {body} string "Error message"
+//	@Failure 401 {body} string "Error message"
+//	@Failure 500 {body} string "Error message"
+//  @Router /lock/:sessionid [PUT]
+func LockSession(c *gin.Context) {
+	sessionid := c.Param("sessionid")
+	var session model.BidSession
+	var winnerid []string
+	var sellerid []string
+	db := GetDBInstance().Db
+	db.Table("bid_session").
+		Where("session_id = ?", sessionid).
+		Pluck("seller_id", &sellerid).
+		Pluck("winner_id", &winnerid)
+	if sellerid[0] == winnerid[0] {
+		session.SessionStatus = FINISHED
+	} else {
+		session.SessionStatus = AWAITINGPAYMENT
+	}
+	if errLock := db.Table("bid_session").
+		Model(&model.BidSession{}).
+		Where("session_id = ?", sessionid).
+		Updates(session).
+		Error; errLock != nil {
+		log.Println(errLock)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Error":   errLock,
+			"message": "Error while locking session",
+		})
+	}
+
+	c.JSON(http.StatusOK, "Successfully lock session!")
+	return
+}
+
+//	@Tags BidSession Controller
+//	@Summary Xóa phiên đấu giá (Administrator only)
+//  @Description Xóa toàn bộ phiên đấu giá và các dữ liệu liên quan như lịch sử đấu giá, thông tin mặt hàng của phiên đấu giá.
 //  @Param Authorization header string true "Session token"
 //  @Param sessionid path string true "session id to be deleted"
 //  @Success 200 {body} string "Success message"
 //	@Failure 400 {body} string "Error message"
 //	@Failure 401 {body} string "Error message"
 //	@Failure 500 {body} string "Error message"
-//  @Router /session/:id [DELETE]
+//  @Router /session/:sessionid [DELETE]
 func DeleteBidSession(c *gin.Context) {
 	var headerInfo model.AuthorizationHeader
 	if err := c.ShouldBindHeader(&headerInfo); err != nil {
@@ -280,7 +404,7 @@ func DeleteBidSession(c *gin.Context) {
 		return
 	}
 
-	sessionid, _ := strconv.Atoi(c.Param("id"))
+	sessionid, _ := strconv.Atoi(c.Param("sessionid"))
 	db := GetDBInstance().Db
 	var itemid []int
 	errGetItemID := db.Table("bid_session").Where("session_id = ?", sessionid).Pluck("item_id", &itemid).Error
@@ -315,7 +439,9 @@ func DeleteBidSession(c *gin.Context) {
 	return
 }
 
-//  @Description Get bid activity/history of user.
+//	@Tags BidSession Controller
+//	@Summary Hiển thị lịch sử đấu giá của user.
+//  @Description Hiển thị những hoạt động đấu giá của user trên các session.
 //  @Param Authorization header string true "Session token"
 //  @Success 200 {object} model.BidHistory
 //	@Failure 400 {body} string "Error message"
@@ -366,7 +492,8 @@ func BidSessionHistory(c *gin.Context) {
 	return
 }
 
-//  @Description Get sell history of user.
+//	@Tags BidSession Controller
+//	@Summary Hiển thị lịch sử bán hàng của user
 //  @Param Authorization header string true "Session token"
 //  @Success 200 {object} model.SellHistory
 //	@Failure 400 {body} string "Error message"
