@@ -46,6 +46,7 @@ Cấu trúc và các công cụ được sử dụng của project:
   - Gin-gonic : https://github.com/gin-gonic
   - Gorm : https://github.com/jinzhu/gorm
   - IDE : Visual Studio Code
+- Testing: Postman: https://www.getpostman.com/
 - FrontEnd:
 - Api documentation: GoSwagger: https://github.com/go-swagger/go-swagger
 - Proxy: Localxpose: https://localxpose.io/
