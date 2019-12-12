@@ -91,7 +91,7 @@ $ go get -u github.com/gin-gonic/contrib/jwt
 $ go get -u github.com/swaggo/files
 $ go get -u github.com/swaggo/gin-swagger
 $ go get -u github.com/jinzhu/gorm
-$ go get -u github.com/jinzhu/gorm/dialects/
+$ go get -u github.com/jinzhu/gorm/dialects/mysql
 $ go get -u github.com/json-iterator/go
 $ go get -u golang.org/x/crypto/bcrypt
 ```
